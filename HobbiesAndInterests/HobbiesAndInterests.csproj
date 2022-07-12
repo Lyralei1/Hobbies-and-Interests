@@ -1,0 +1,148 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <PropertyGroup>
+    <ProjectGuid>{EBA82F5E-A038-4D2C-AD42-A8A67382F65F}</ProjectGuid>
+    <ProjectTypeGuids>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <OutputType>Library</OutputType>
+    <RootNamespace>HobbiesAndInterests</RootNamespace>
+    <AssemblyName>HobbiesAndInterests</AssemblyName>
+    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <NoWin32Manifest>False</NoWin32Manifest>
+    <SignAssembly>False</SignAssembly>
+    <DelaySign>False</DelaySign>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+    <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
+    <NoStdLib>True</NoStdLib>
+    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
+    <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <BaseAddress>4194304</BaseAddress>
+    <RegisterForComInterop>False</RegisterForComInterop>
+    <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
+    <FileAlignment>4096</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <OutputPath>bin\Debug\</OutputPath>
+    <DebugSymbols>True</DebugSymbols>
+    <DebugType>Full</DebugType>
+    <Optimize>False</Optimize>
+    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <OutputPath>bin\Release\</OutputPath>
+    <DebugSymbols>False</DebugSymbols>
+    <DebugType>None</DebugType>
+    <Optimize>True</Optimize>
+    <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
+    <DefineConstants>TRACE</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x86\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+    <FileAlignment>4096</FileAlignment>
+    <NoStdLib>true</NoStdLib>
+    <DebugType>Full</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
+    <OutputPath>bin\x86\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <FileAlignment>4096</FileAlignment>
+    <NoStdLib>true</NoStdLib>
+    <DebugType>None</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Books\BookDataForHobbies.cs" />
+    <Compile Include="HelperClasses\CommonHelpers.cs" />
+    <Compile Include="HelperClasses\Ferry.cs" />
+    <Compile Include="HelperClasses\HobbyLot.cs" />
+    <Compile Include="Interaction\GeneralInterestsInteractions.cs" />
+    <Compile Include="HelperClasses\InterestSaveManager.cs" />
+    <Compile Include="Interaction\InterestsInterests\EnvironmentInteractions.cs" />
+    <Compile Include="Interaction\SocialInteractions.cs" />
+    <Compile Include="Interests\Scifi.cs" />
+    <Compile Include="Interests\Toys.cs" />
+    <Compile Include="Interests\Animals.cs" />
+    <Compile Include="Interests\Entertainment.cs" />
+    <Compile Include="Interests\Sports.cs" />
+    <Compile Include="Interests\Crime.cs" />
+    <Compile Include="Interests\Health.cs" />
+    <Compile Include="Interests\Paranormal.cs" />
+    <Compile Include="Interests\Politics.cs" />
+    <Compile Include="Interests\Money.cs" />
+    <Compile Include="Interests\Culture.cs" />
+    <Compile Include="Interests\Food.cs" />
+    <Compile Include="Interests\Environment.cs" />
+    <Compile Include="Interests\Fashion.cs" />
+    <Compile Include="GlobalOptionsHobbiesAndInterests.cs" />
+    <Compile Include="HelperClasses\InterestManager.cs" />
+    <Compile Include="Interests\Interest.cs" />
+    <Compile Include="HelperClasses\PersistedData.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Interaction\SimDebugInteractions.cs" />
+    <Compile Include="Interaction\GreenEnergyManager.cs" />
+    <Compile Include="HelperClasses\TownieInterestHelper.cs" />
+    <Compile Include="UI\UiComponents.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="0x03D6C8D903CE868C_Sims3GameplaySystems">
+      <HintPath>D:\Workfolder\Tools\Scripts\0x03D6C8D903CE868C_Sims3GameplaySystems.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="0x0CAE1C361E05B2B3_Sims3StoreObjects">
+      <HintPath>D:\Workfolder\Tools\Scripts\0x0CAE1C361E05B2B3_Sims3StoreObjects.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="0x28EE9D383A73463E_mscorlib">
+      <HintPath>D:\Workfolder\Tools\Scripts\0x28EE9D383A73463E_mscorlib.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="0x342EE04373CF1E1C_System">
+      <HintPath>D:\Workfolder\Tools\Scripts\0x342EE04373CF1E1C_System.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="0x600F9EA1DDC99FB1_Sims3MetaData">
+      <HintPath>D:\Workfolder\Tools\Scripts\0x600F9EA1DDC99FB1_Sims3MetaData.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="0x6AC101133051BEF1_System.Xml">
+      <HintPath>D:\Workfolder\Tools\Scripts\0x6AC101133051BEF1_System.Xml.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="0x78CF6CF5304D0C4F_ScriptCore_Pure">
+      <HintPath>D:\Workfolder\Tools\Scripts\0x78CF6CF5304D0C4F_ScriptCore_Pure.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="0xB9C90FDC6793BC0A_Sims3GameplayObjects">
+      <HintPath>D:\Workfolder\Tools\Scripts\0xB9C90FDC6793BC0A_Sims3GameplayObjects.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="0xC356DF69B70ADD42_SimIFace">
+      <HintPath>D:\Workfolder\Tools\Scripts\0xC356DF69B70ADD42_SimIFace.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="0xF7C3ADE896D4E765_UI">
+      <HintPath>D:\Workfolder\Tools\Scripts\0xF7C3ADE896D4E765_UI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Battery.Utility">
+      <HintPath>D:\Workfolder\Tools\Scripts\Battery\Battery.Utility.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
