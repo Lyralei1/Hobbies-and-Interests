@@ -372,7 +372,7 @@ namespace Lyralei
 
             public override bool Run()
             {
-                InterestSaveManager.ExtractInterestData();
+                InterestSaveManager.ImportInterestData();
                 return true;
             }
 
@@ -396,7 +396,7 @@ namespace Lyralei
 
             public override bool Run()
             {
-                InterestSaveManager.WriteInterestData();
+                InterestSaveManager.ExportInterestData();
                 return true;
             }
 
@@ -423,13 +423,6 @@ namespace Lyralei
                 Sim[] objects = Sims3.Gameplay.Queries.GetObjects<Sim>();
                 InterestManager.print("Sim data available: " + InterestManager.mSavedSimInterests.Count.ToString() + "   (Current population: " + objects.Length.ToString());
 
-                StringBuilder sb = new StringBuilder();
-
-                foreach(string worlds in GlobalOptionsHobbiesAndInterests.retrieveData.mInterestSaveData.Keys)
-                {
-                    sb.AppendLine(worlds);
-                }
-                InterestManager.print("Save data for the following Saves:" + System.Environment.NewLine + System.Environment.NewLine + sb);
                 return true;
             }
 
@@ -524,51 +517,6 @@ namespace Lyralei
             }
         }
 
-        //public class putSolarPanelsOnRoof : ImmediateInteraction<Sim, Sim>
-        //{
 
-        //    public static readonly InteractionDefinition Singleton = new Definition();
-
-        //    public override bool Run()
-        //    {
-        //        if (InterestManager.HasInterests(base.Actor))
-        //        {
-        //            Lot lot = Actor.LotCurrent;
-        //            if (Sims3.SimIFace.World.HasAnyRoof(lot.LotId))
-        //            {
-        //               // Vector3 positions[];
-        //                World.FindPointsOnRoofs(lot.LotId, 200, out Vector3[] positions);
-        //                for (int i = 0; i < positions.Length; i++)
-        //                {
-        //                    LyraleiSolarPanel gameObject = GlobalFunctions.CreateObject(ResourceKey.FromString("0x319E4F1D:0x00000000:0x578B0EAF3A93A882"), positions[i], (int)positions[i].y, positions[i], null, null) as LyraleiSolarPanel;
-        //                    gameObject = LyraleiSolarPanel.rotateWhenPlacedOnRoof(gameObject);
-        //                    // figure out the direction of roof
-        //                }
-        //                //LyraleiSolarPanel.rotateWhenPlacedOnRoof(gameObject);
-        //                //uint result = Sims3.SimIFace.World.GetRoofSlopeAngle();
-        //            }
-        //            //Make it so they're dynamically placed on roof
-        //            //LyraleiSolarPanel gameObject = GlobalFunctions.CreateObject(ResourceKey.FromString("0x319E4F1D-0x00000000-0x578B0EAF3A93A882") as LyraleiSolarPanel;
-        //        }
-        //        else
-        //        {
-        //            GlobalOptionsHobbiesAndInterests.print("Sim does Not have interests");
-        //        }
-        //        return true;
-        //    }
-
-        //    [DoesntRequireTuning]
-        //    public sealed class Definition : ImmediateInteractionDefinition<Sim, Sim, putSolarPanelsOnRoof>
-        //    {
-        //        public override string GetInteractionName(Sim a, Sim target, InteractionObjectPair interaction)
-        //        {
-        //            return "Check if roof has points";
-        //        }
-        //        public override bool Test(Sim a, Sim target, bool isAutonomous, ref GreyedOutTooltipCallback greyedOutTooltipCallback)
-        //        {
-        //            return true;
-        //        }
-        //    }
-        //}
     }
 }

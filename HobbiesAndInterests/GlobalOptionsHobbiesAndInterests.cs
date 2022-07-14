@@ -1,6 +1,5 @@
-﻿using Lyralei.InterestMod;
-using Lyralei.UI;
-using Sims3.Gameplay;
+﻿using Lyralei;
+using Lyralei.InterestMod;
 using Sims3.Gameplay.Abstracts;
 using Sims3.Gameplay.Actors;
 using Sims3.Gameplay.ActorSystems;
@@ -8,32 +7,25 @@ using Sims3.Gameplay.Autonomy;
 using Sims3.Gameplay.CAS;
 using Sims3.Gameplay.Core;
 using Sims3.Gameplay.EventSystem;
-using Sims3.Gameplay.Interactions;
-using Sims3.Gameplay.Interfaces;
-using Sims3.Gameplay.Lyralei.InterestMod;
 using Sims3.Gameplay.Objects;
 using Sims3.Gameplay.Objects.Electronics;
 using Sims3.Gameplay.Objects.Environment;
 using Sims3.Gameplay.Objects.Lyralei;
-using Sims3.Gameplay.Objects.RabbitHoles;
 using Sims3.Gameplay.Socializing;
 using Sims3.Gameplay.Utilities;
 using Sims3.SimIFace;
 using Sims3.UI;
-using Sims3.UI.CAS;
-using Sims3.UI.Hud;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Text;
 using System.Xml;
 
-namespace Lyralei
+namespace Sims3.Gameplay.Lyralei.InterestMod
 {
-	/// <summary>
-	/// Global options hobbies and interests is the helper class that sets up anything that needs setting up, upon worldload, or any gameload.
-	/// </summary>
-	public class GlobalOptionsHobbiesAndInterests
+    /// <summary>
+    /// Global options hobbies and interests is the helper class that sets up anything that needs setting up, upon worldload, or any gameload.
+    /// </summary>
+    public class GlobalOptionsHobbiesAndInterests
 	{
 		[Tunable]
         protected static bool kInstantiator = false;
@@ -41,6 +33,7 @@ namespace Lyralei
         private static EventListener sBoughtObjectLister = null;
         private static EventListener sSimInstantiatedListener = null;
         public static EventListener sAgeSettingsHasChanged = null;
+        public static AlarmHandle sAlarmTownieEAFixes = AlarmHandle.kInvalidHandle;
 
         static GlobalOptionsHobbiesAndInterests()
         {
@@ -75,17 +68,6 @@ namespace Lyralei
 
         //public static void OnStartupApp(object sender, EventArgs e)
         //{
-        //    AppDomain currentDomain = AppDomain.CurrentDomain;
-        //    Assembly[] assems = currentDomain.GetAssemblies();
-        //    foreach (Assembly assembly in assems)
-        //    {
-        //        if (assembly.GetName().Name != "Battery.Utility")
-        //        {
-        //            print("Thanks for downloading the Interests & Hobbies mod! However, this mod is very dependant on Battery's Script Utility, which is currently not installed. Please make sure to install this first before proceeding! Else your game could possibly implode or start becoming self-concious ;)" + System.Environment.NewLine + System.Environment.NewLine + "(C# Script Utility) https://modthesims.info/d/615096/c-script-utility.html");
-        //            System.Diagnostics.P
-        //            break;
-        //        }
-        //    }
         //}
 
         public static void OnPreload()
@@ -101,6 +83,7 @@ namespace Lyralei
             //}
         }
 
+        // Loads on WorldLoadFinished. may want to move this to OnStartup
         public static void ParseSocialInteractions()
         {
             try
@@ -119,17 +102,12 @@ namespace Lyralei
 
             try
             {
+
                 // Populate interestType helper list if necessary
                 InitInterestTypesList();
 
                 ParseBooks();
                 ParseSocialInteractions();
-
-                //if (alreadyParsed)
-                //{
-                //    Ferry<PersistedDataInterests>.UnloadCargo();
-                //}
-                //alreadyParsed = false;
 
                 // REMOVE WHEN DONE TESTING!!!
                 //InterestManager.mSavedSimInterests.Clear();
@@ -140,10 +118,10 @@ namespace Lyralei
                 Sim[] objects = Sims3.Gameplay.Queries.GetObjects<Sim>();
 
 
-                //GetSimIdAndSimNames(objects);
+                // GetSimIdAndSimNames(objects);
 
                 // Import the save data first before assigning new interests to any sims that aren't in the list.
-                InterestSaveManager.ExtractInterestData();
+                InterestSaveManager.ImportInterestData();
 
                 for (int i = 0; i < objects.Length; i++)
                 {
@@ -151,7 +129,7 @@ namespace Lyralei
                     if (sim != null || sim.SimDescription != null)
                     {
                         // Check if sim is in the world, if it isn't a pet or if it isn't a service in the world
-                        if (sim.InWorld || !sim.IsPet || !sim.IsPerformingAService)
+                        if (sim.InWorld && !sim.IsPet && !sim.IsPerformingAService && sim.Household.LotHome != null)
                         {
                             ulong id = sim.SimDescription.SimDescriptionId;
 
@@ -191,6 +169,9 @@ namespace Lyralei
                         }
                     }
                 }
+
+                sAlarmTownieEAFixes = AlarmManager.Global.AddAlarm(5f, TimeUnit.Minutes, TownieInterestHelper.TownieHobbyFixer, "TownieFixes", AlarmType.NeverPersisted, null);
+
 
                 //print("Count sims at End" + InterestManager.mSavedSimInterests.Count.ToString()); //84
 
@@ -244,8 +225,7 @@ namespace Lyralei
 
         public static void OnWorldQuit(object sender, EventArgs e)
         {
-            //InterestSaveManager.SaveUserData();
-
+            // InterestSaveManager.SaveUserData();
 
             foreach (Sim sim in Sims3.Gameplay.Queries.GetObjects<Sim>())
             {
@@ -298,7 +278,7 @@ namespace Lyralei
                 }
                 EventTracker.RemoveListener(sBoughtObjectLister);
             }
-            InterestSaveManager.WriteInterestData();
+            InterestSaveManager.ExportInterestData();
 
             InterestManager.mSavedSimInterests.Clear();
 
@@ -352,7 +332,6 @@ namespace Lyralei
                     List<XmlElement> list = lookup["Action"];
                     foreach (XmlElement element in list)
                     {
-
                         XmlElementLookup table = new XmlElementLookup(element);
                         CommodityTypes intendedCom;
                         ParserFunctions.TryParseEnum(element.GetAttribute("com"), out intendedCom, CommodityTypes.Undefined);
@@ -392,6 +371,7 @@ namespace Lyralei
                                     }
                                 }
                             }
+                            print("Should've overriden it...");
                             ActionData.sData[element.GetAttribute("key")] = data;
                         }
                         else
@@ -428,10 +408,7 @@ namespace Lyralei
 
             foreach (InterestTypes interest in (InterestTypes[])types)
             {
-                if(interest == InterestTypes.None)
-                {
-                    continue;
-                }
+                if(interest == InterestTypes.None) { continue; }
                 BookGeneralInterestsDataList.Add(interest.ToString() + "_Lyralei", new BookGeneralInterestsData(interest, interest.ToString()));
 
                 if(!didAllmagazines)
@@ -453,16 +430,7 @@ namespace Lyralei
                     }
                 }
             }
-            //Bookstore.mItemDictionary.Clear();
-            //Bookstore.LoadData();
-            //List<StoreItem> list = new List<StoreItem>();
-  
-            //foreach (BookGeneralInterestsData value in BookGeneralInterestsDataList.Values)
-            //{
-            //    ThumbnailKey thumb = new ThumbnailKey(new ResourceKey(ResourceUtils.XorFoldHashString32("book_standard"), 23466547u, 1u), ThumbnailSize.Medium, ResourceUtils.HashString32(value.GeometryState), ResourceUtils.HashString32(value.MaterialState));
-            //    StoreItem item = new BookInterestGeneralStoreItem(value.Title, (float)value.Value, value, thumb, value.GenerateUIStoreItemID(), Bookstore.CreateBookGeneralCallback, ProcessBookGeneralInterestCallback, value.AllowedWorlds, value.AllowedWorldTypes, value.Author, value.Title, value.Length, value.interestType);
-            //    Bookstore.mItemDictionary["General"].Add(item);
-            //}
+
         }
 
         public static string[] randomSimsArray = new string[7]

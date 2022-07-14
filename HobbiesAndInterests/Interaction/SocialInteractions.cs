@@ -41,6 +41,8 @@ namespace Lyralei.InterestMod
         public static Dictionary<string, string> mOverridableInteraction = new Dictionary<string, string>()
         {
             { "Talk About Going Green",  "CallbackTalkAboutGoingGreen" },
+            { "DebateClimateChange",  "CallbackDebateClimateChange" },
+
         };
 
         public static void DoSkillingAfterwards(Sim actor, Sim target, bool doSkillingForTarget)
@@ -70,11 +72,14 @@ namespace Lyralei.InterestMod
         //Primarily focuses on overriding existing socials.
         public static void CallbackTalkAboutGoingGreen(Sim actor, Sim target, string interaction, ActiveTopic topic, InteractionInstance i)
         {
+            InterestManager.print("Gotten to callback");
             DoSkillingAfterwards(actor, target, true);
         }
 
         public static void CallbackDebateClimateChange(Sim actor, Sim target, string interaction, ActiveTopic topic, InteractionInstance i)
         {
+            InterestManager.print("Gotten to callback");
+
             DoSkillingAfterwards(actor, target, true);
 
             bool isEasilyImpressed = target.HasTrait(Sims3.Gameplay.ActorSystems.TraitNames.EasilyImpressed);

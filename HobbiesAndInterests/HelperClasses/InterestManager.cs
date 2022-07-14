@@ -1,6 +1,4 @@
-﻿using Lyralei;
-using Lyralei.InterestMod;
-using ScriptCore;
+﻿using Lyralei.InterestMod;
 using Sims3.Gameplay.Actors;
 using Sims3.Gameplay.ActorSystems;
 using Sims3.Gameplay.CAS;
@@ -20,9 +18,6 @@ using Sims3.SimIFace;
 using Sims3.UI;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
-using System.Text;
-using System.Xml;
 using Event = Sims3.Gameplay.EventSystem.Event;
 
 namespace Sims3.Gameplay.Lyralei.InterestMod
@@ -64,11 +59,21 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
     public class InterestManager
     {
 
+        // Explicit static constructor to tell C# compiler
+        // not to mark type as beforefieldinit
+        static InterestManager()
+        {
+        }
+        private InterestManager()
+        {
+        }
+
+
         // Ulong == SimDescription ID
         // Interest is a collection of interests of the sim.
         public static Dictionary<ulong, List<Interest>> mSavedSimInterests = new Dictionary<ulong, List<Interest>>();
 
-        public static readonly InterestManager instance = new InterestManager();
+        private static readonly InterestManager instance = new InterestManager();
 
         [Tunable]
         public static int perTraitPenaltyPointLost = -3;
@@ -94,7 +99,7 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
         public static float mAddLikingWhenLovingInterest = 10f;
 
         public string[] kInterestAnimalsBalloons = new string[11]
-{
+        {
             "balloon_butterflies",
             "balloon_fish",
             "ep5_balloon_cats",
@@ -106,7 +111,7 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
             "ep5_balloon_snake",
             "ep5_balloon_turtle",
             "balloon_llama"
-};
+        };
 
         public string[] kInterestCrimeBalloons = new string[4]
         {
@@ -470,6 +475,8 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
 
             try
             {
+                if(interest == null) { return 3; }
+
                 // return Neutral
                 if (interest.currInterestPoints >= 9 && interest.currInterestPoints <= 13)
                 {

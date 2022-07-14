@@ -72,8 +72,9 @@
     <Compile Include="HelperClasses\HobbyLot.cs" />
     <Compile Include="Interaction\GeneralInterestsInteractions.cs" />
     <Compile Include="HelperClasses\InterestSaveManager.cs" />
-    <Compile Include="Interaction\InterestsInterests\EnvironmentInteractions.cs" />
+    <Compile Include="Interaction\PerInterest\EnvironmentInteractions.cs" />
     <Compile Include="Interaction\SocialInteractions.cs" />
+    <Compile Include="Tunables.cs" />
     <Compile Include="Interests\Scifi.cs" />
     <Compile Include="Interests\Toys.cs" />
     <Compile Include="Interests\Animals.cs" />

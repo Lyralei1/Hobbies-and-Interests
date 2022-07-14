@@ -65,9 +65,32 @@ namespace Lyralei.InterestMod
     public class InterestSaveManager
     {
 
-        public static void WriteInterestData()
+        // because we can't always guarantee that the sims that in the save that once were in the world, are still there when we save, we want to remove them.
+        private static void CleanSavedSimsList()
         {
-            if (InterestManager.mSavedSimInterests == null || InterestManager.mSavedSimInterests.Count == 0)
+            List<ulong> mKeysToDelete = new List<ulong>();
+            foreach (KeyValuePair<ulong, List<Interest>> kpv in InterestManager.mSavedSimInterests)
+            {
+                SimDescription foundSim = SimDescription.Find(kpv.Key);
+
+                if(foundSim == null)
+                {
+                    mKeysToDelete.Add(kpv.key);
+                }
+
+                // This usually means it's a townie that has left the world for the time being. We don't store this type of data because it's useless for service sims and homeless NPCs to have hobbies...
+                if(foundSim.CreatedSim == null)
+                {
+                    mKeysToDelete.Add(kpv.key);
+                }
+
+                if(!foundSim.CreatedSim.InWorld) { mKeysToDelete.Add(kpv.key); }
+            }
+        }
+
+        public static void ExportInterestData()
+        {
+            if (InterestManager.mSavedSimInterests == null || InterestManager.mSavedSimInterests.Count == 0 )
             {
                 return;
             }
@@ -149,34 +172,11 @@ namespace Lyralei.InterestMod
 
                 byte[] bytes = memorystream.ToArray();
 
-                InterestManager.print("MemorySteam bytes: " + bytes.Length.ToString());
+                //InterestManager.print("MemorySteam bytes: " + bytes.Length.ToString());
                 var str = BitConverter.ToString(bytes);
-                var mSaveFileName = "";
 
-                if (GameStates.SaveGameMetadata == null)
-                {
-                     mSaveFileName = "LyraleiInterestsAndHobbiesPlaceholder_" + GameStates.GetCurrentWorldName(false);
-                }
-                else
-                {
-                     mSaveFileName = GameStates.SaveGameMetadata.mSaveFile;
+                GlobalOptionsHobbiesAndInterests.retrieveData.mInterestSaveData = str;
 
-                }
-
-                if (GlobalOptionsHobbiesAndInterests.retrieveData == null)
-                {
-                    return;
-                }
-
-                // If there is already a save, override the old data with the new data.
-                if (GlobalOptionsHobbiesAndInterests.retrieveData.mInterestSaveData.ContainsKey(mSaveFileName))
-                {
-                    GlobalOptionsHobbiesAndInterests.retrieveData.mInterestSaveData[mSaveFileName] = str;
-                }
-                else
-                {
-                    GlobalOptionsHobbiesAndInterests.retrieveData.mInterestSaveData.Add(mSaveFileName, str);
-                }
                 //ProgressDialog.Close();
                 InterestManager.print("Done!");
             }
@@ -186,229 +186,17 @@ namespace Lyralei.InterestMod
             }
         }
 
-        public static void SaveInterestData()
-        {
-            // If it's null, it's a new save and we should trigger the setup code instead
-            if(InterestManager.mSavedSimInterests == null || InterestManager.mSavedSimInterests.Count == 0)
-            {
-                return;
-            }
-            StringBuilder sb = new StringBuilder();
-            try
-            {
-                uint num = 0u;
-                string s = Simulator.CreateExportFile(ref num, "InterestAndHobbies_savedData_BACKUP" + GameStates.SaveGameMetadata.mSaveFile);
-
-                if (num != 0)
-                {
-                    
-                    //ProgressDialog.Show("Saving Interest & Hobbies Data... One Sec!", false);
-                    //FastStreamWriter writer = new FastStreamWriter(num);
-                    CustomXmlWriter customXmlWriter = new CustomXmlWriter(num);
-
-                    MemoryStream memorystream = new MemoryStream();
-                    BinaryWriter bw = new BinaryWriter(memorystream);
-
-                    int numSims = InterestManager.mSavedSimInterests.Count;
-                    //InterestManager.print(numSims.ToString());
-                    
-                    bw.Write(numSims);
-
-
-                    foreach (KeyValuePair<ulong, List<Interest>> kpv in InterestManager.mSavedSimInterests)
-                    {
-                        bw.Write(kpv.Key); // simID
-                        bw.Write(kpv.Value.Count); // Amount of interests
-
-                        //if (count == 0)
-                        //{
-                        //    InterestManager.print("simID: " + kpv.Key.ToString());
-                        //}
-
-                        foreach (Interest interest in kpv.Value)
-                        {
-                            if(interest == null)
-                            {
-                                continue;
-                            }
-
-                            bw.Write((ulong)interest.Guid);
-
-                            bw.Write(interest.currInterestPoints);
-                            bw.Write(interest.mPointsBeforeAddingInterestPoint);
-
-                            //if (interest.hobbies == null)
-                            //{
-                            //    continue;
-                            //}
-                            //else
-                            //{
-                            //    // Seems to be null all the time?
-                            //    bw.Write(interest.hobbies.Count);
-
-                            //    foreach (Interest.Hobby hobby in interest.hobbies)
-                            //    {
-                            //        if (hobby == null)
-                            //        {
-                            //            continue;
-                            //        }
-                            //        bw.Write(hobby.mId);
-                            //        bw.Write(hobby.mIsMasterInHobby);
-
-                            //        // TODO: Store saved count points
-                            //    }
-                            //}
-
-                            bw.Write(interest.mSimKnownWithPassionateInterests.Count);
-
-                            if (interest.mSimKnownWithPassionateInterests.Count > 0)
-                            {
-                                //InterestManager.print("Found passionate sims " + interest.mSimKnownWithPassionateInterests.Count);
-                                foreach (KeyValuePair<ulong, InterestTypes> knownPassionate in interest.mSimKnownWithPassionateInterests)
-                                {
-                                    // Sim ID of known sim
-                                    bw.Write(knownPassionate.Key);
-
-                                    // InterestType of passionate.
-                                    bw.Write((ulong)knownPassionate.Value);
-                                }
-                            }
-                            bw.Write(interest.mSimKnownWithHateInterests.Count);
-
-                            if (interest.mSimKnownWithHateInterests.Count > 0)
-                            {
-                                InterestManager.print("Found hate sims " + interest.mSimKnownWithHateInterests.Count);
-                                foreach (KeyValuePair<ulong, InterestTypes> knownHate in interest.mSimKnownWithHateInterests)
-                                {
-                                    // Sim ID of known sim
-                                    bw.Write(knownHate.Key);
-
-                                    // InterestType of Hate.
-                                    bw.Write((ulong)knownHate.Value);
-                                }
-                            }
-                        }
-                    }
-                    //InterestManager.print("Wrote " + count.ToString() + " savedSimInterests");
-
-                    bw.Close();
-
-                    byte[] bytes = memorystream.ToArray();
-
-                    InterestManager.print("MemorySteam bytes: " + bytes.Length.ToString());
-                    //InterestManager.print("Expected " + ((count * 4) + 4).ToString() + " bytes");
-
-                    //var str = System.Text.Encoding.UTF8.GetString(bytes);
-                    var str = BitConverter.ToString(bytes);
-                    var mWorldName = GameStates.SaveGameMetadata.mSaveFile;
-
-
-
-                    // If there is already a save, override the old data with the new data.
-                    if (GlobalOptionsHobbiesAndInterests.retrieveData != null && GlobalOptionsHobbiesAndInterests.retrieveData.mInterestSaveData.ContainsKey(mWorldName))
-                    {
-                        GlobalOptionsHobbiesAndInterests.retrieveData.mInterestSaveData[mWorldName] = str;
-                    }
-                    else
-                    {
-                        GlobalOptionsHobbiesAndInterests.retrieveData.mInterestSaveData.Add(mWorldName, str);
-                    }
-
-                    //ProgressDialog.Close();
-
-                    //InterestManager.print(str);
-
-                    //InterestManager.print(str.Length.ToString());
-
-                    //customXmlWriter.WriteStartDocument();
-                    //customXmlWriter.WriteElementString("saveData", str);
-                    customXmlWriter.WriteToBuffer(str);
-                    customXmlWriter.WriteEndDocument();
-
-                    InterestManager.print("Done!");
-
-                    //foreach(ulong id in InterestManager.mSavedSimInterests.Keys)
-                    //{
-                    //    bw.Write(id);
-                    //    bw.Write(InterestManager.mSavedSimInterests[id].Count);
-
-                    //    foreach (Interest interest in InterestManager.mSavedSimInterests[id])
-                    //    {
-
-                    //        bw.Write((ulong)interest.Guid);
-
-                    //        bw.Write(interest.currInterestPoints);
-                    //        bw.Write(interest.mPointsBeforeAddingInterestPoint);
-
-
-                    //        //bw.Write(interest.hobbies.Count);
-
-
-                    //        //    foreach(Interest.Hobby hobby in interest.hobbies)
-                    //        //    {
-                    //        //        bw.Write(hobby.mId);
-                    //        //        bw.Write(hobby.mIsMasterInHobby);
-
-                    //        //        // TODO: Store saved count points
-
-                    //        //    }
-
-                    //        foreach (KeyValuePair<ulong, InterestTypes> kpv in interest.mSimKnownWithPassionateInterests)
-                    //        {
-                    //            // Sim ID of known sim
-                    //            bw.Write(kpv.Key);
-
-                    //            // InterestType of passionate.
-                    //            bw.Write((ulong)kpv.Value);
-                    //        }
-
-                    //        foreach (KeyValuePair<ulong, InterestTypes> kpv in interest.mSimKnownWithHateInterests)
-                    //        {
-                    //            // Sim ID of known sim
-                    //            bw.Write(kpv.Key);
-
-                    //            // InterestType of Hate.
-                    //            bw.Write((ulong)kpv.Value);
-                    //        }
-                    //    }
-                    //}
-                    //bw.Close();
-                }
-
-
-            }
-            catch (Exception ex)
-            {
-                ProgressDialog.Close();
-                WriteErrorXMLFile("Save data error", ex, null);
-            }
-
-
-            //GetFirstPackageId(ref PackageId packageId)
-        }
-
-        public static void ExtractInterestData()
+        public static void ImportInterestData()
         {
             StringBuilder sb = new StringBuilder();
 
             try
             {
-                string currentWorld = "";
-                if (GameStates.SaveGameMetadata == null)
-                {
-                    currentWorld = "LyraleiInterestsAndHobbiesPlaceholder_" + GameStates.GetCurrentWorldName(false);
-                }
-                else
-                {
-                    currentWorld = GameStates.SaveGameMetadata.mSaveFile;
-
-                }
-
-                if (GlobalOptionsHobbiesAndInterests.retrieveData.mInterestSaveData != null && GlobalOptionsHobbiesAndInterests.retrieveData.mInterestSaveData.ContainsKey(currentWorld))
+                if (!string.IsNullOrEmpty(GlobalOptionsHobbiesAndInterests.retrieveData.mInterestSaveData))
                 {
 
                     // Convert string to a usable byte to read.
-                    string str = GlobalOptionsHobbiesAndInterests.retrieveData.mInterestSaveData[currentWorld];
+                    string str = GlobalOptionsHobbiesAndInterests.retrieveData.mInterestSaveData;
 
                     InterestManager.print(str.Length.ToString());
 
@@ -432,7 +220,7 @@ namespace Lyralei.InterestMod
                         sb.AppendLine("simID: " + simId.ToString());
                         SimDescription findOwner = SimDescription.Find(simId);
 
-                        if(findOwner == null)
+                        if (findOwner == null)
                         {
                             sb.AppendLine("simID didn't exist... skipping it now ");
                         }
@@ -509,6 +297,11 @@ namespace Lyralei.InterestMod
 
                         InterestManager.mSavedSimInterests.Add(simId, interests);
                     }
+
+                    // We have to manually close this if we want to write an XML file
+                    reader.Close();
+                    input.Close();
+
                     WriteErrorXMLFile("Extracted", null, sb.ToString());
 
                     InterestManager.print(numSim.ToString());
@@ -531,111 +324,6 @@ namespace Lyralei.InterestMod
             return raw;
         }
 
-        //public class container
-        //{
-        //    public Dictionary<ulong, List<Interest>> data = new Dictionary<ulong, List<Interest>>();
-        //}
-
-        //public static string savedData;
-
-        //// We return a bool to check if the saving was successful.
-        //public static bool SaveUserData()
-        //{
-        //    try
-        //    {
-        //        container ct = new container();
-        //        ct.data = InterestManager.mSavedSimInterests;
-
-        //        savedData = ct.ToExportString();
-
-        //        uint num = 0u;
-        //        string s = Simulator.CreateExportFile(ref num, "Save data Serialised");
-
-        //        if (num != 0)
-        //        {
-        //            CustomXmlWriter customXmlWriter = new CustomXmlWriter(num);
-        //            customXmlWriter.WriteToBuffer(savedData.ToString());
-        //            customXmlWriter.WriteEndDocument();
-        //        }
-        //        GlobalOptionsHobbiesAndInterests.print("Save data was successfully written.");
-        //        return true;
-        //    }
-        //    catch(Exception ex)
-        //    {
-        //        WriteErrorXMLFile("Save Data - ERROR", ex);
-        //        return false;
-        //    }
-        //}
-
-        //public static bool ExtractSavedData()
-        //{
-        //    try
-        //    {
-        //        uint num = 0u;
-        //        string s = Simulator.CreateExportFile(ref num, "Saved User Data - InterestMod");
-
-        //        if (num != 0)
-        //        {
-        //            CustomXmlWriter customXmlWriter = new CustomXmlWriter(num);
-
-        //            customXmlWriter.WriteToBuffer("--- " + GameUtils.GetCurrentWorld().ToString() + " ---");
-        //            customXmlWriter.WriteToBuffer(System.Environment.NewLine);
-
-        //            container mReserialisedSavedData = Export_Import.Deserialize<container>(savedData);
-
-        //            customXmlWriter.WriteToBuffer(savedData);
-
-        //            //Dictionary<ulong, List<Interest>> mReserialisedSavedData = Export_Import.Deserialize<Dictionary<ulong, List<Interest>>>(savedData);
-
-        //            //foreach (KeyValuePair<ulong, List<Interest>> kvp in mReserialisedSavedData.data)
-        //            //{
-        //            //    customXmlWriter.WriteToBuffer(System.Environment.NewLine);
-        //            //    customXmlWriter.WriteToBuffer("ID: " + kvp.Key.ToString());
-        //            //    customXmlWriter.WriteToBuffer(System.Environment.NewLine);
-
-        //            //    foreach (Interest interest in kvp.Value)
-        //            //    {
-        //            //        customXmlWriter.WriteToBuffer("Name: " + interest.Name);
-        //            //        customXmlWriter.WriteToBuffer(System.Environment.NewLine);
-        //            //        customXmlWriter.WriteToBuffer("Description: " + interest.Description);
-        //            //        customXmlWriter.WriteToBuffer(System.Environment.NewLine);
-        //            //        customXmlWriter.WriteToBuffer("CurrInterestPoints: " + interest.currInterestPoints.ToString());
-        //            //        customXmlWriter.WriteToBuffer(System.Environment.NewLine);
-        //            //        customXmlWriter.WriteToBuffer("GUID: " + interest.Guid.ToString());
-        //            //        customXmlWriter.WriteToBuffer(System.Environment.NewLine);
-        //            //        customXmlWriter.WriteToBuffer("Hobby count: " + interest.hobbies.Count.ToString());
-        //            //        customXmlWriter.WriteToBuffer(System.Environment.NewLine);
-        //            //        customXmlWriter.WriteToBuffer("Interest Owner: " + interest.InterestOwner.ToString());
-        //            //        customXmlWriter.WriteToBuffer(System.Environment.NewLine);
-        //            //        customXmlWriter.WriteToBuffer("mPointsBeforeAddingInterestPoint: " + interest.mPointsBeforeAddingInterestPoint.ToString());
-        //            //        customXmlWriter.WriteToBuffer(System.Environment.NewLine);
-        //            //        customXmlWriter.WriteToBuffer("traitBoost Count: " + interest.traitBoost.Count.ToString());
-        //            //        customXmlWriter.WriteToBuffer(System.Environment.NewLine);
-        //            //        customXmlWriter.WriteToBuffer("traitPenaltiy Count: " + interest.traitPenalty.Count.ToString());
-        //            //        customXmlWriter.WriteToBuffer(System.Environment.NewLine);
-
-        //            //    }
-        //            //    customXmlWriter.WriteToBuffer(System.Environment.NewLine);
-        //            //}
-        //            customXmlWriter.WriteEndDocument();
-
-        //            StyledNotification.Format format = new StyledNotification.Format("Visible sim export written to '" + s + "'.", StyledNotification.NotificationStyle.kGameMessageNegative);
-        //            StyledNotification.Show(format);
-        //            return true;
-        //        }
-        //        else
-        //        {
-        //            StyledNotification.Format format = new StyledNotification.Format("Num ref was 0", StyledNotification.NotificationStyle.kGameMessageNegative);
-        //            StyledNotification.Show(format);
-        //            return false;
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        WriteErrorXMLFile("Extract Save Data - ERROR", ex);
-        //        return false;
-        //    }
-        //}
 
         public static void WriteErrorXMLFile(string fileName, Exception errorToPrint, string additionalinfo)
         {

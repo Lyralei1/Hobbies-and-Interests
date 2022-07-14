@@ -10,6 +10,7 @@ using Sims3.Gameplay.Core;
 using Sims3.Gameplay.Interactions;
 using Sims3.Gameplay.Interfaces;
 using Sims3.Gameplay.Lyralei.InterestMod;
+using Sims3.Gameplay.Lyralei.InterestsAndHobbies;
 using Sims3.Gameplay.Objects.Electronics;
 using Sims3.Gameplay.Skills;
 using Sims3.Gameplay.Socializing;
@@ -251,7 +252,7 @@ namespace Lyralei.InterestMod
                 glowType = ProgressMeter.GlowType.Weak;
             }
             researchRate *= deltaTime;
-            interestChosen.PercentageResearchDone += researchRate * 100f / (float)30f; //Turn into a tunable! Amount of pages the sim will read (30f pages currently)
+            interestChosen.PercentageResearchDone += researchRate * 100f / Tunables.kAmountOfPagesASimReadsResearch; // Amount of pages the sim will read (30f pages currently)
             if (interestChosen.PercentageResearchDone > 100f)
             {
                 interestChosen.PercentageResearchDone = 100f;
@@ -262,7 +263,7 @@ namespace Lyralei.InterestMod
 
         public float GetFinishedResearchRate()
         {
-            float num = 0.05f;// basevalue
+            float num = 0.05f; // basevalue
             if (base.Actor.TraitManager.HasElement(TraitNames.BookWorm))
             {
                 num += 0.05f; // If they're a bookwork, add this.
