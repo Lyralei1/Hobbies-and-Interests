@@ -3,6 +3,7 @@ using Sims3.Gameplay.Actors;
 using Sims3.Gameplay.ActorSystems;
 using Sims3.Gameplay.Autonomy;
 using Sims3.Gameplay.CAS;
+using Sims3.Gameplay.EventSystem;
 using Sims3.Gameplay.Interactions;
 using Sims3.Gameplay.Interfaces;
 using Sims3.Gameplay.Skills;
@@ -12,6 +13,7 @@ using Sims3.SimIFace;
 using Sims3.UI;
 using Sims3.UI.Hud;
 using System.Collections.Generic;
+using System.Text;
 
 namespace Sims3.Gameplay.Lyralei.InterestMod
 {
@@ -27,6 +29,9 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
             : base(InterestTypes.Environment, simDescription)
         {
             this.mInterestsGuid = InterestTypes.Environment;
+            this.sHobbySkillListener = EventTracker.AddListener(EventTypeId.kSkillLevelUp, new ProcessEventDelegate(OnSkilledUpHobbyHelper));
+            //this.sHobbyInteractionListener = EventTracker.AddListener(EventTypeId.kUserDirectedInteraction, new ProcessEventDelegate(OnInteractionHelper));
+            this.sHobbyInteractionListener = EventTracker.AddListener(EventTypeId.kInteractionSuccess, new ProcessEventDelegate(OnInteractionHelper));
 
             this.indexInList = 4;
             this.mHasInstalledSolarPanels = false;
@@ -43,10 +48,12 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                                     TraitNames.LovesTheOutdoors,
                                     TraitNames.Vegetarian
                                 };
+
             this.traitPenalty = new List<TraitNames>() {
                                     TraitNames.HatesOutdoors,
                                     TraitNames.CouchPotato
                                 };
+
             this.mNecessarySkillsForInterest = new List<SkillNames>()
             {
                 SkillNames.Gardening,
@@ -60,16 +67,72 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
             OffTheGrid offTheGrid = new OffTheGrid(this);
 
             this.mHobbies = new List<Hobby>() {
-                        climateChangeHobby,
-                        natureHobby,
-                        offTheGrid
-                    };
+                climateChangeHobby,
+                natureHobby,
+                offTheGrid
+            };
         }
 
         public Environment()
         {
         }
 
+        public ListenerAction OnSkilledUpHobbyHelper(Event e)
+        {
+            SimDescription sim = SimDescription.Find(this.InterestOwner);
+            if (sim != null && sim.CreatedSim != null)
+            {
+                for(int i = 0; i < this.mHobbies.Count; i++)
+                {
+                    for(int h = 0; h < this.mHobbies[i].mRequiredSkillsForHobby.Count; h++)
+                    {
+                        if (sim.SkillManager.HasElement(this.mHobbies[i].mRequiredSkillsForHobby[h]))
+                        {
+                            hobbies[i].IsCompleted(sim.CreatedSim, this.mHobbies[i].mRequiredSkillsForHobby, this.mHobbies[i].mRequiredSkillPoints);
+                        }
+                    }
+                }
+            }
+            return ListenerAction.Keep;
+        }
+        public ListenerAction OnInteractionHelper(Event e)
+        {
+            InteractionSuccessEvent interactionSuccessEvent = e as InteractionSuccessEvent;
+            StringEvent stringEvent = e as StringEvent;
+            if (interactionSuccessEvent != null)
+            {
+                //InterestManager.print(interactionSuccessEvent.IOP.InteractionDefinition.GetType().FullName);
+            }
+
+            if(interactionSuccessEvent.IOP.InteractionDefinition.GetType().FullName.Contains(typeof(Objects.RabbitHoles.ScienceLab.SellSamples).FullName))
+            {
+                CheckInteractionForHobbies(interactionSuccessEvent);
+            }
+
+            return ListenerAction.Keep;
+        }
+
+        public void CheckInteractionForHobbies(InteractionSuccessEvent interactionSuccessEvent)
+        {
+            for(int i = 0; i < this.mHobbies.Count; i++)
+            {
+                if (this.mHobbies[i] is ClimateChangeHobby)
+                {
+                    ClimateChangeHobby hobbyClimate = this.mHobbies[i] as ClimateChangeHobby;
+                    hobbyClimate.PlantSamplesDonated++;
+
+                    for (int c = 0; c < this.mHobbies[i].mHobbyChallenges.Count; c++)
+                    {
+                        if (this.mHobbies[i].mHobbyChallenges[c] is SellPlantSamples)
+                        {
+                            SellPlantSamples hobbyPlants = this.mHobbies[i].mHobbyChallenges[c] as SellPlantSamples;
+                            hobbyPlants.PlantSamples++;
+                        }
+                    }
+                    return;
+                }
+            }
+        }
 
         [Persistable(false)]
         public List<Hobby> mTrackedStats;
@@ -93,6 +156,7 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
         //    mTrackedStats.Add(mClimateChangeHobby);
         //    mTrackedStats.Add(offTheGrid);
         //}
+
 
         public class ClimateChangeHobby : Hobby
         {
@@ -161,18 +225,13 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                 }
             }
 
-            public bool mIsMasterInHobby = false;
+            private bool mIsMasterInHobby = false;
             public bool IsMasterInHobby
             {
                 get
                 {
                     SimDescription sim = SimDescription.Find(mLinkedInterestInstance.InterestOwner);
-                    if (this.mRequiredSkillPoints[0] == sim.SkillManager.GetSkillLevel(this.mRequiredSkillsForHobby[0]))
-                    {
-                        mIsMasterInHobby = true;
-                    }
-
-                    return mIsMasterInHobby;
+                    return this.IsCompleted(sim.CreatedSim, this.mRequiredSkillsForHobby, this.mRequiredSkillPoints);
                 }
                 set
                 {
@@ -186,7 +245,7 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
 
                 if(interest != null)
                 {
-                    this.mLinkedInterestInstance = interest;
+                    this.mLinkedInterestInstance            = interest;
                 }
 
                 this.mDescription                           = "Sims who love the environment, can also decide to help the climate! Everything that helps the planet a little is a very interesting hobby for them.";
@@ -195,6 +254,8 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                 this.mSkillsOptional                        = new List<SkillNames>() { SkillNames.Science };
                 this.mRequiredSkillPoints                   = new List<int>();
                 this.mRequiredSkillPoints                   = InterestManager.RequiredSkillsLevelForAgeSettings(this.mRequiredSkillsForHobby, this.mLinkedInterestInstance.InterestOwner);
+                this.mOptionalSkillPoints                   = InterestManager.RequiredSkillsLevelForAgeSettings(this.mSkillsOptional, this.mLinkedInterestInstance.InterestOwner);
+
 
                 ConvinceSimsToInterest convinceSims         = new ConvinceSimsToInterest(interest);
                 DonateToGoodCauses donateToGoodCauses       = new DonateToGoodCauses(interest);
@@ -211,6 +272,48 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                 this.mHobbyChallenges.Add(plantTrees);
 
                 IsVegetarian = isVegetarian;
+            }
+
+            public override string ToString()
+            {
+                SimDescription simDescription = SimDescription.Find(this.mLinkedInterestInstance.InterestOwner);
+
+                StringBuilder sb = new StringBuilder();
+                if(simDescription != null && simDescription.CreatedSim != null)
+                {
+                    sb.AppendLine(this.mName);
+                    sb.AppendLine(this.mId.ToString());
+                    sb.AppendLine(this.mDescription);
+                    sb.AppendLine("");
+                    sb.AppendLine("Master in Hobby: " + this.IsMasterInHobby.ToString());
+                    sb.AppendLine("Is Vegetarian: " + this.IsVegetarian.ToString());
+                    sb.AppendLine("");
+                    sb.AppendLine("Required Skill(s):");
+
+                    int index = 0;
+                    foreach (SkillNames skill in this.mRequiredSkillsForHobby)
+                    {
+                        sb.AppendLine("*" + skill.ToString() + " points: " + simDescription.SkillManager.GetSkillLevel(skill) + "(Needs: " + this.mRequiredSkillPoints[index] + ")");
+                        index++;
+                    }
+
+                    sb.AppendLine("");
+                    sb.AppendLine("Optional Skill(s):");
+
+                    index = 0;
+                    foreach (SkillNames skill in this.mSkillsOptional)
+                    {
+                        sb.AppendLine(skill.ToString() + " points: " + simDescription.SkillManager.GetSkillLevel(skill) + "(Needs: " + this.mOptionalSkillPoints[index] + ")");
+                        index++;
+                    }
+                    sb.AppendLine("");
+
+                    sb.AppendLine("Donated to causes: " + this.DonatedToCauses.ToString());
+                    sb.AppendLine("Times Samples Donated: " + this.PlantSamplesDonated.ToString());
+                    sb.AppendLine("Sims Influenced: " + this.SimsConverted.ToString());
+                    sb.AppendLine("Trees planted & Grown: " + this.TreesPlantedAndGrown.ToString());
+                }
+                return sb.ToString();
             }
 
             public bool ImportContent(IPropertyStreamReader reader)
@@ -282,6 +385,17 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                 this.mDescription = "Whether it might help the world a little or not, your sim would love to convince at least 5 sims to pursue the Environment Interest";
                 this.mLinkedInterestInstance = interest;
             }
+
+            public override string ToString()
+            {
+                StringBuilder sb = new StringBuilder();
+
+                sb.AppendLine(this.mName);
+                sb.AppendLine(this.mDescription);
+                sb.AppendLine();
+                sb.AppendLine("Sims influenced: " + this.SimsConverted.ToString() + "( " + this.mAmountToFinish.ToString() + ")");
+                return sb.ToString();
+            }
         }
 
         public class DonateToGoodCauses : HobbyChallenge
@@ -322,6 +436,18 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                 this.mName = "Donated to at least 20 good causes";
                 this.mDescription = "Your sim is looking for ways to donate to plenty of Climate Chance-related causes, to help the organisations continue their progress.";
                 this.mLinkedInterestInstance = interest;
+            }
+
+            public override string ToString()
+            {
+
+                StringBuilder sb = new StringBuilder();
+
+                sb.AppendLine(this.mName);
+                sb.AppendLine(this.mDescription);
+                sb.AppendLine();
+                sb.AppendLine("Donated to good cause: " + this.DonatedToGoodCauses.ToString() + "( " + this.mAmountToFinish.ToString() + ")");
+                return sb.ToString();
             }
         }
 
@@ -364,6 +490,17 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                 this.mDescription = "The Science lab is always asking for more Plant Samples, so that they can archive plant breeds that are dying out or are no longer around to grow them back. By Selling 25 Plant Samples, you'll help this archive grow.";
                 this.mLinkedInterestInstance = interest;
             }
+
+            public override string ToString()
+            {
+                StringBuilder sb = new StringBuilder();
+
+                sb.AppendLine(this.mName);
+                sb.AppendLine(this.mDescription);
+                sb.AppendLine();
+                sb.AppendLine("Plant Samples Donated: " + this.PlantSamples.ToString() + "( " + this.mAmountToFinish.ToString() + ")");
+                return sb.ToString();
+            }
         }
 
         public class PlantTrees : HobbyChallenge
@@ -405,6 +542,18 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                 this.mDescription = "In average, a tree takes 30 years to mature. Your sim would love to see at least 5 trees maturing in their lifetime.";
                 this.mLinkedInterestInstance = interest;
             }
+
+            public override string ToString()
+            {
+
+                StringBuilder sb = new StringBuilder();
+                
+                sb.AppendLine(this.mName);
+                sb.AppendLine(this.mDescription);
+                sb.AppendLine();
+                sb.AppendLine("Planted Trees: " + this.PlantedTrees.ToString() + "( " + this.mAmountToFinish.ToString() + ")");
+                return sb.ToString();
+            }
         }
 
         public class NatureHobby : Hobby
@@ -422,7 +571,42 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
 
                 this.mRequiredSkillPoints           = new List<int>();
                 this.mRequiredSkillPoints           = InterestManager.RequiredSkillsLevelForAgeSettings(this.mRequiredSkillsForHobby, this.mLinkedInterestInstance.InterestOwner);
+                this.mOptionalSkillPoints           = InterestManager.RequiredSkillsLevelForAgeSettings(this.mSkillsOptional, this.mLinkedInterestInstance.InterestOwner);
+            }
 
+            public override string ToString()
+            {
+                SimDescription simDescription = SimDescription.Find(this.mLinkedInterestInstance.InterestOwner);
+
+                StringBuilder sb = new StringBuilder();
+                if (simDescription != null && simDescription.CreatedSim != null)
+                {
+                    sb.AppendLine(this.mName);
+                    sb.AppendLine(this.mId.ToString());
+                    sb.AppendLine(this.mDescription);
+                    sb.AppendLine();
+                    sb.AppendLine("Required Skill(s):");
+
+                    int index = 0;
+                    foreach (SkillNames skill in this.mRequiredSkillsForHobby)
+                    {
+                        sb.AppendLine("*" + skill.ToString() + " points: " + simDescription.SkillManager.GetSkillLevel(skill) + "(Needs: " + this.mRequiredSkillPoints[index] + ")");
+                        index++;
+                    }
+
+                    sb.AppendLine();
+                    sb.AppendLine("Optional Skill(s):");
+
+                    index = 0;
+                    foreach (SkillNames skill in this.mSkillsOptional)
+                    {
+                        sb.AppendLine("*" + skill.ToString() + " points: " + simDescription.SkillManager.GetSkillLevel(skill) + "(Needs: " + this.mOptionalSkillPoints[index] + ")");
+                        index++;
+                    }
+
+                    sb.AppendLine("Fish Caught: " + this.FishCaughtCount.ToString());
+                }
+                return sb.ToString();
             }
         }
 
@@ -438,6 +622,43 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                 this.mSkillsOptional = new List<SkillNames>() { SkillNames.Collecting };
                 this.mRequiredSkillPoints = new List<int>();
                 this.mRequiredSkillPoints = InterestManager.RequiredSkillsLevelForAgeSettings(this.mRequiredSkillsForHobby, this.mLinkedInterestInstance.InterestOwner);
+                this.mOptionalSkillPoints = InterestManager.RequiredSkillsLevelForAgeSettings(this.mSkillsOptional, this.mLinkedInterestInstance.InterestOwner);
+
+            }
+
+            public override string ToString()
+            {
+                SimDescription simDescription = SimDescription.Find(this.mLinkedInterestInstance.InterestOwner);
+
+                StringBuilder sb = new StringBuilder();
+                if (simDescription != null && simDescription.CreatedSim != null)
+                {
+                    sb.AppendLine(this.mName);
+                    sb.AppendLine(this.mId.ToString());
+                    sb.AppendLine(this.mDescription);
+                    sb.AppendLine();
+                    sb.AppendLine("Required Skill(s):");
+
+                    int index = 0;
+                    foreach (SkillNames skill in this.mRequiredSkillsForHobby)
+                    {
+                        sb.AppendLine("*" + skill.ToString() + " points: " + simDescription.SkillManager.GetSkillLevel(skill) + "(Needs: " + this.mRequiredSkillPoints[index] + ")");
+                        index++;
+                    }
+
+                    sb.AppendLine();
+                    sb.AppendLine("Optional Skill(s):");
+
+                    index = 0;
+                    foreach (SkillNames skill in this.mSkillsOptional)
+                    {
+                        sb.AppendLine("*" + skill.ToString() + " points: " + simDescription.SkillManager.GetSkillLevel(skill) + "(Needs: " + this.mOptionalSkillPoints[index] + ")");
+                        index++;
+                    }
+
+                    //sb.AppendLine("Fish Caught: " + this.FishCaughtCount.ToString());
+                }
+                return sb.ToString();
             }
         }
     }

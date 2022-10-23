@@ -100,48 +100,56 @@
     <Compile Include="UI\UiComponents.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Analyzer Include="..\..\..\..\Documents\Workfolder\Tools\Scripts\0x03D6C8D903CE868C_Sims3GameplaySystems.dll" />
+    <Analyzer Include="..\..\..\..\Documents\Workfolder\Tools\Scripts\0x0CAE1C361E05B2B3_Sims3StoreObjects.dll" />
+    <Analyzer Include="..\..\..\..\Documents\Workfolder\Tools\Scripts\0x28EE9D383A73463E_mscorlib.dll" />
+    <Analyzer Include="..\..\..\..\Documents\Workfolder\Tools\Scripts\0x342EE04373CF1E1C_System.dll" />
+    <Analyzer Include="..\..\..\..\Documents\Workfolder\Tools\Scripts\0x600F9EA1DDC99FB1_Sims3MetaData.dll" />
+    <Analyzer Include="..\..\..\..\Documents\Workfolder\Tools\Scripts\0x6AC101133051BEF1_System.Xml.dll" />
+    <Analyzer Include="..\..\..\..\Documents\Workfolder\Tools\Scripts\0x78CF6CF5304D0C4F_ScriptCore_Pure.dll" />
+    <Analyzer Include="..\..\..\..\Documents\Workfolder\Tools\Scripts\0xB9C90FDC6793BC0A_Sims3GameplayObjects.dll" />
+    <Analyzer Include="..\..\..\..\Documents\Workfolder\Tools\Scripts\0xC356DF69B70ADD42_SimIFace.dll" />
+    <Analyzer Include="..\..\..\..\Documents\Workfolder\Tools\Scripts\0xF7C3ADE896D4E765_UI.dll" />
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="0x03D6C8D903CE868C_Sims3GameplaySystems">
-      <HintPath>D:\Workfolder\Tools\Scripts\0x03D6C8D903CE868C_Sims3GameplaySystems.dll</HintPath>
+      <HintPath>..\..\..\..\Documents\Workfolder\Tools\Scripts\0x03D6C8D903CE868C_Sims3GameplaySystems.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="0x0CAE1C361E05B2B3_Sims3StoreObjects">
-      <HintPath>D:\Workfolder\Tools\Scripts\0x0CAE1C361E05B2B3_Sims3StoreObjects.dll</HintPath>
+      <HintPath>..\..\..\..\Documents\Workfolder\Tools\Scripts\0x0CAE1C361E05B2B3_Sims3StoreObjects.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="0x28EE9D383A73463E_mscorlib">
-      <HintPath>D:\Workfolder\Tools\Scripts\0x28EE9D383A73463E_mscorlib.dll</HintPath>
+      <HintPath>..\..\..\..\Documents\Workfolder\Tools\Scripts\0x28EE9D383A73463E_mscorlib.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="0x342EE04373CF1E1C_System">
-      <HintPath>D:\Workfolder\Tools\Scripts\0x342EE04373CF1E1C_System.dll</HintPath>
+      <HintPath>..\..\..\..\Documents\Workfolder\Tools\Scripts\0x342EE04373CF1E1C_System.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="0x600F9EA1DDC99FB1_Sims3MetaData">
-      <HintPath>D:\Workfolder\Tools\Scripts\0x600F9EA1DDC99FB1_Sims3MetaData.dll</HintPath>
+      <HintPath>..\..\..\..\Documents\Workfolder\Tools\Scripts\0x600F9EA1DDC99FB1_Sims3MetaData.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="0x6AC101133051BEF1_System.Xml">
-      <HintPath>D:\Workfolder\Tools\Scripts\0x6AC101133051BEF1_System.Xml.dll</HintPath>
+      <HintPath>..\..\..\..\Documents\Workfolder\Tools\Scripts\0x6AC101133051BEF1_System.Xml.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="0x78CF6CF5304D0C4F_ScriptCore_Pure">
-      <HintPath>D:\Workfolder\Tools\Scripts\0x78CF6CF5304D0C4F_ScriptCore_Pure.dll</HintPath>
+      <HintPath>..\..\..\..\Documents\Workfolder\Tools\Scripts\0x78CF6CF5304D0C4F_ScriptCore_Pure.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="0xB9C90FDC6793BC0A_Sims3GameplayObjects">
-      <HintPath>D:\Workfolder\Tools\Scripts\0xB9C90FDC6793BC0A_Sims3GameplayObjects.dll</HintPath>
+      <HintPath>..\..\..\..\Documents\Workfolder\Tools\Scripts\0xB9C90FDC6793BC0A_Sims3GameplayObjects.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="0xC356DF69B70ADD42_SimIFace">
-      <HintPath>D:\Workfolder\Tools\Scripts\0xC356DF69B70ADD42_SimIFace.dll</HintPath>
+      <HintPath>..\..\..\..\Documents\Workfolder\Tools\Scripts\0xC356DF69B70ADD42_SimIFace.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="0xF7C3ADE896D4E765_UI">
-      <HintPath>D:\Workfolder\Tools\Scripts\0xF7C3ADE896D4E765_UI.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Battery.Utility">
-      <HintPath>D:\Workfolder\Tools\Scripts\Battery\Battery.Utility.dll</HintPath>
+      <HintPath>..\..\..\..\Documents\Workfolder\Tools\Scripts\0xF7C3ADE896D4E765_UI.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>

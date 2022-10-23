@@ -1,6 +1,7 @@
 ﻿using Sims3.Gameplay;
 using Sims3.Gameplay.Abstracts;
 using Sims3.Gameplay.Actors;
+using Sims3.Gameplay.ActorSystems;
 using Sims3.Gameplay.CAS;
 using Sims3.Gameplay.Core;
 using Sims3.Gameplay.Interactions;
@@ -8,10 +9,12 @@ using Sims3.Gameplay.Lyralei.InterestMod;
 using Sims3.Gameplay.Lyralei.InterestsAndHobbies;
 using Sims3.Gameplay.Objects.Appliances;
 using Sims3.Gameplay.Objects.CookingObjects;
+using Sims3.Gameplay.Objects.Counters;
 using Sims3.Gameplay.Objects.Electronics;
 using Sims3.Gameplay.Objects.Fireplaces;
 using Sims3.Gameplay.Objects.Fishing;
 using Sims3.Gameplay.Objects.Gardening;
+using Sims3.Gameplay.Objects.HobbiesSkills;
 using Sims3.Gameplay.Objects.Miscellaneous;
 using Sims3.Gameplay.Objects.Plumbing;
 using Sims3.Gameplay.Situations;
@@ -22,6 +25,7 @@ using Sims3.Store.Objects;
 using Sims3.UI;
 using System;
 using System.Collections.Generic;
+using Camera = Sims3.Gameplay.Core.Camera;
 using Food = Sims3.Gameplay.Lyralei.InterestMod.Food;
 
 namespace Lyralei.InterestMod
@@ -31,8 +35,6 @@ namespace Lyralei.InterestMod
     /// </summary>
     public class TownieInterestHelper
     {
-
-
         public static void DoTraitTownieCalculation(Interest interests, int amountOfTraits, SimDescription simDescription, bool isForPenalty)
         {
             //InterestManager.print("Actually went here");
@@ -51,14 +53,6 @@ namespace Lyralei.InterestMod
 
             if (premadeSims.ContainsKey(simDescription.mSimDescriptionId))
             {
-
-                // Set gardening level for Jocasta, since EA forgot this it seems.
-                // if(simDescription.mSimDescriptionId == 257u && simDescription.SkillManager.AddElement(SkillNames.Gardening).SkillLevel < 1)
-                // {
-                //    simDescription.SkillManager.AddSkillPoints(SkillNames.Gardening, 3);
-                //    GlobalOptionsHobbiesAndInterests.print("Jocasta has skilled up!");
-                // }
-
                 foreach (Interest positive in premadeSims[simDescription.mSimDescriptionId].positiveInterests)
                 {
                     if (interests.GetType() == positive.GetType())
@@ -75,7 +69,6 @@ namespace Lyralei.InterestMod
                     }
                 }
             }
-            //premadesThatShouldHaveDoubleInterests(interests, simDescription);
         }
 
         // Turn into a switch statement.
@@ -185,6 +178,9 @@ namespace Lyralei.InterestMod
 
         public static void SetTownieAlarms(Sim sim)
         {
+            // if the user has decided that townies can't have a life after work, then exit out.
+            if(!Tunables.kMayTowniesPerformHobbiesAutonomously) { return; }
+
             if (sim != null && sim.SimDescription != null && InterestManager.mSavedSimInterests.ContainsKey(sim.SimDescription.SimDescriptionId))
             {
                 float TimeUntilEvent = RandomUtil.GetFloat(1f, 24f);
@@ -917,6 +913,7 @@ namespace Lyralei.InterestMod
 
         public static void DoHobbyInteraction(Sim sim, GameObject gameObject, InteractionDefinition interactionDef,  bool IsForCommunityLot)
         {
+
             try
             {
                 InteractionInstance interactionInstance = null;
@@ -926,8 +923,11 @@ namespace Lyralei.InterestMod
                 {
                     // if(HarvestPlant.HarvestTest(plant, sim))
                     //{
-                    GoTo = GoToLot.Singleton.CreateInstance(gameObject.LotCurrent, sim, new InteractionPriority(InteractionPriorityLevel.High), true, true);
-                    interactionInstance = interactionDef.CreateInstance(gameObject, sim, new InteractionPriority(InteractionPriorityLevel.High), true, true) as InteractionInstance;
+
+                    GoTo = VisitLot.Singleton.CreateInstance(gameObject.LotCurrent, sim, sim.ForcePushPriority(), false, false) as VisitLot;
+
+                    //GoTo = GoToLot.Singleton.CreateInstance(gameObject.LotCurrent, sim, sim.ForcePushPriority(), true, true);
+                    interactionInstance = interactionDef.CreateInstance(gameObject, sim, sim.ForcePushPriority(), true, true) as InteractionInstance;
                     //}
                     //else
                     //{
@@ -969,231 +969,6 @@ namespace Lyralei.InterestMod
             mHasMadeFood = AlarmHandle.kInvalidHandle;
         }
 
-        public static void TownieHobbyFixer()
-        {
-            // if the user has tuned the mod to not allow townies to get any skill points into their new saves (or saves that see the interest mod for the first time), we exit out.
-            if(!Tunables.kCanAcceptDynamicallyAssignSkillsToTownies) { return; }
 
-            foreach(KeyValuePair<ulong, simPremadeInterests> kpv in premadeSims)
-            {
-                ulong simId = kpv.key;
-
-
-                // Premades we want to edit:
-                switch(simId)
-                {
-                    
-                    case 257u:
-                        {
-                            SkillNames[] skills = new SkillNames[] { SkillNames.Cooking, SkillNames.Gardening };
-                            SKillingUpHelperFunction(simId, skills);
-                            GlobalOptionsHobbiesAndInterests.print("Jocasta has skilled up!");
-                            break;
-                        }
-                    case 260u:
-                        {
-                            SkillNames[] Skills = new SkillNames[] { SkillNames.Foosball, SkillNames.BallFighting, SkillNames.Snowboarding, SkillNames.Trampoline, SkillNames.Waterskiing, SkillNames.Windsurfing, SkillNames.Skating };
-                            SKillingUpHelperFunction(simId, Skills);
-
-                            SimDescription simDescription = SimDescription.Find(260u);
-                            if (simDescription == null) { break; }
-
-                            if (simDescription.SkillManager.GetElement(SkillNames.Athletic).SkillLevel == 1)
-                            {
-                                simDescription.SkillManager.AddSkillPoints(SkillNames.Athletic, 3f);
-                            }
-                            GlobalOptionsHobbiesAndInterests.print("Micheal has skilled up!");
-                            break;
-                        }
-                    case 259u:
-                        {
-                            SkillNames[] skills = new SkillNames[] { SkillNames.ChildAthletic, SkillNames.ChildPiano, SkillNames.ChildGardening, SkillNames.Charisma };
-                            SKillingUpHelperFunction(simId, skills);
-                            GlobalOptionsHobbiesAndInterests.print("Bella has skilled up!");
-                            break;
-                        }
-                    case 218u:
-                        {
-                            SkillNames[] skills = new SkillNames[] { SkillNames.SocialNetworking, SkillNames.Bartending };
-                            SKillingUpHelperFunction(simId, skills);
-                            GlobalOptionsHobbiesAndInterests.print("Thorthon has skilled up!");
-                            break;
-                        }
-                    case 150u:
-                        {
-                            SkillNames[] skills = new SkillNames[] { SkillNames.Charisma };
-                            SKillingUpHelperFunction(simId, skills);
-                            GlobalOptionsHobbiesAndInterests.print("Jared has skilled up!");
-                            break;
-                        }
-                    case 163u:
-                        {
-                            SkillNames[] skills = new SkillNames[] { SkillNames.Charisma };
-                            SKillingUpHelperFunction(simId, skills);
-                            GlobalOptionsHobbiesAndInterests.print("Jack has skilled up!");
-                            break;
-                        }
-                    case 169u:
-                        {
-                            SkillNames[] skills = new SkillNames[] { SkillNames.Athletic, SkillNames.BallFighting };
-                            SKillingUpHelperFunction(simId, skills);
-                            GlobalOptionsHobbiesAndInterests.print("Lisa has skilled up!");
-                            break;
-                        }
-                    case 171u:
-                        {
-                            SkillNames[] skills = new SkillNames[] { SkillNames.ChildAthletic };
-                            SKillingUpHelperFunction(simId, skills);
-                            GlobalOptionsHobbiesAndInterests.print("Arlo has skilled up!");
-                            break;
-                        }
-                    case 231u:
-                        {
-                            SkillNames[] skills = new SkillNames[] { SkillNames.SocialNetworking };
-                            SKillingUpHelperFunction(simId, skills);
-                            GlobalOptionsHobbiesAndInterests.print("Illiana has skilled up!");
-                            break;
-                        }
-                    case 234u:
-                        {
-                            SkillNames[] skills = new SkillNames[] { SkillNames.Charisma };
-                            SKillingUpHelperFunction(simId, skills);
-                            GlobalOptionsHobbiesAndInterests.print("Parker has skilled up!");
-                            break;
-                        }
-                    case 377u:
-                        {
-                            SkillNames[] skills = new SkillNames[] { SkillNames.Charisma };
-                            SKillingUpHelperFunction(simId, skills);
-                            GlobalOptionsHobbiesAndInterests.print("Gus has skilled up!");
-                            break;
-                        }
-                    case 1226u:
-                        {
-                            SkillNames[] skills = new SkillNames[] { SkillNames.Athletic };
-                            SKillingUpHelperFunction(simId, skills);
-                            GlobalOptionsHobbiesAndInterests.print("Xander has skilled up!");
-                            break;
-                        }
-                    case 154u:
-                        {
-                            SkillNames[] skills = new SkillNames[] { SkillNames.Painting, SkillNames.Photography, SkillNames.Sculpting };
-                            SKillingUpHelperFunction(simId, skills);
-                            GlobalOptionsHobbiesAndInterests.print("Victoria has skilled up!");
-                            break;
-                        }
-                    case 2314u:
-                        {
-                            SkillNames[] skills = new SkillNames[] { SkillNames.Painting, SkillNames.Cooking, SkillNames.Charisma };
-                            SKillingUpHelperFunction(simId, skills);
-                            GlobalOptionsHobbiesAndInterests.print("Christopher has skilled up!");
-                            break;
-                        }
-                    case 138u:
-                        {
-                            SkillNames[] skills = new SkillNames[] { SkillNames.ChildAthletic, SkillNames.Logic, SkillNames.Charisma };
-                            SKillingUpHelperFunction(simId, skills);
-                            GlobalOptionsHobbiesAndInterests.print("Miraj has skilled up!");
-                            break;
-                        }
-                    case 193u:
-                        {
-                            SkillNames[] skills = new SkillNames[] { SkillNames.Athletic, SkillNames.Logic };
-                            SKillingUpHelperFunction(simId, skills);
-                            GlobalOptionsHobbiesAndInterests.print("Miraj has skilled up!");
-                            break;
-                        }
-                    case 197u:
-                        {
-                            SkillNames[] skills = new SkillNames[] { SkillNames.Logic };
-                            SKillingUpHelperFunction(simId, skills);
-                            GlobalOptionsHobbiesAndInterests.print("Miraj has skilled up!");
-                            break;
-                        }
-                    case 6340u:
-                        {
-                            SkillNames[] skills = new SkillNames[] { SkillNames.Cooking };
-                            SKillingUpHelperFunction(simId, skills);
-                            GlobalOptionsHobbiesAndInterests.print("Tori has skilled up!");
-                            break;
-                        }
-                    case 329u:
-                        {
-                            SkillNames[] skills = new SkillNames[] { SkillNames.Athletic, SkillNames.Logic, SkillNames.Painting, SkillNames.Piano, SkillNames.Mooch };
-                            SKillingUpHelperFunction(simId, skills);
-                            GlobalOptionsHobbiesAndInterests.print("Ayesha has skilled up!");
-                            break;
-                        }
-                    case 8318u:
-                        {
-                            SkillNames[] skills = new SkillNames[] { SkillNames.Charisma };
-                            SKillingUpHelperFunction(simId, skills);
-                            GlobalOptionsHobbiesAndInterests.print("Geoffrey has skilled up!");
-                            break;
-                        }
-                    case 8319u:
-                        {
-                            SkillNames[] skills = new SkillNames[] { SkillNames.Charisma };
-                            SKillingUpHelperFunction(simId, skills);
-                            GlobalOptionsHobbiesAndInterests.print("Nancy has skilled up!");
-                            break;
-                        }
-                    case 244u:
-                        {
-                            SkillNames[] skills = new SkillNames[] { SkillNames.Cooking, SkillNames.Piano, SkillNames.Mooch, SkillNames.MartialArts };
-                            SKillingUpHelperFunction(simId, skills);
-                            GlobalOptionsHobbiesAndInterests.print("Gunther has skilled up!");
-                            break;
-                        }
-                    case 245u:
-                        {
-                            SkillNames[] skills = new SkillNames[] { SkillNames.Cooking, SkillNames.Piano, SkillNames.Charisma };
-                            SKillingUpHelperFunction(simId, skills);
-                            GlobalOptionsHobbiesAndInterests.print("Cornelia has skilled up!");
-                            break;
-                        }
-                    case 246u:
-                        {
-                            SkillNames[] skills = new SkillNames[] { SkillNames.ChildPiano, SkillNames.Painting, SkillNames.ChildGardening, SkillNames.Chess, SkillNames.Collecting };
-                            SKillingUpHelperFunction(simId, skills);
-                            GlobalOptionsHobbiesAndInterests.print("Mortimer has skilled up!");
-                            break;
-                        }
-                }
-
-
-            }
-
-        }
-
-        public static void SKillingUpHelperFunction(ulong simId, SkillNames[] skills)
-        {
-            SimDescription simDescription = SimDescription.Find(simId);
-            if (simDescription == null) { return; }
-
-            foreach(SkillNames skill in skills)
-            {
-                if(!simDescription.SkillManager.HasElement(skill))
-                {
-                    simDescription.SkillManager.AddElement(skill);
-                    simDescription.SkillManager.GetElement(skill).ForceSkillLevelUp(3);
-                    //simDescription.SkillManager.AddSkillPoints(skill, 3f);
-                }
-            }
-
-        }
-
-        // Because Skills didn't have a "Has Any Element", I implemented a new one.
-        public static bool HasAnyElement(SkillNames[] guids, SimDescription desc)
-        {
-            for (int i = 0; i < guids.Length; i++)
-            {
-                if (desc.SkillManager.HasElement((ulong)guids[i]))
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
     }
 }

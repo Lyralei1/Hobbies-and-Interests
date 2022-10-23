@@ -17,6 +17,7 @@ using Sims3.UI;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Environment = Sims3.Gameplay.Lyralei.InterestMod.Environment;
 
 namespace Lyralei
 {
@@ -406,6 +407,53 @@ namespace Lyralei
                 public override string GetInteractionName(Sim a, Sim target, InteractionObjectPair interaction)
                 {
                     return "Save The Data";
+                }
+                public override bool Test(Sim a, Sim target, bool isAutonomous, ref GreyedOutTooltipCallback greyedOutTooltipCallback)
+                {
+                    return true;
+                }
+            }
+        }
+
+        public class ChooseAHobby : ImmediateInteraction<Sim, Sim>
+        {
+            public static readonly InteractionDefinition Singleton = new Definition();
+
+            public override bool Run()
+            {
+                List<Interest> interests = InterestManager.mSavedSimInterests[base.Target.SimDescription.SimDescriptionId];
+                for (int i = 0; i < interests.Count; i++)
+                {
+                    if (interests[i].Guid == InterestTypes.Environment)
+                    {
+                        if (interests[i].currInterestPoints == 0) interests[i].modifyInterestLevel(10, base.Target.SimDescription.SimDescriptionId, InterestTypes.Environment);
+
+                        List<ObjectListPickerInfo> breedInfo = new List<ObjectListPickerInfo>();
+
+                        foreach (Interest.Hobby hobby in interests[i].hobbies)
+                        {
+                            ObjectListPickerInfo o = new ObjectListPickerInfo(hobby.mName, hobby);
+                            breedInfo.Add(o);
+                        }
+                        Interest.Hobby chosenItem = ObjectListPickerDialog.Show(breedInfo) as Interest.Hobby;
+
+                        SimpleMessageDialog.Show("Interests & hobbies: ", chosenItem.ToString());
+
+                        foreach (Interest.HobbyChallenge challenge in chosenItem.mHobbyChallenges)
+                        {
+                            SimpleMessageDialog.Show("Interests & hobbies: ", challenge.ToString());
+                        }
+                    }
+                }
+                return true;
+            }
+
+            [DoesntRequireTuning]
+            public sealed class Definition : ImmediateInteractionDefinition<Sim, Sim, ChooseAHobby>
+            {
+                public override string GetInteractionName(Sim a, Sim target, InteractionObjectPair interaction)
+                {
+                    return "Choose a Hobby (environment)";
                 }
                 public override bool Test(Sim a, Sim target, bool isAutonomous, ref GreyedOutTooltipCallback greyedOutTooltipCallback)
                 {

@@ -115,6 +115,7 @@ namespace Lyralei.InterestMod
             {
                 base.AlterMotiveMultiplier(CommodityKind.Fun, TraitTuning.NightOwlFunModifier);
             }
+
             if (interestChosen == null)
             {
                 base.AnimateSim("WorkTyping");
@@ -128,10 +129,12 @@ namespace Lyralei.InterestMod
             ProgressMeter.ShowProgressMeter(base.Actor, 0f, ProgressMeter.GlowType.Weak);
 
             bool flag = DoLoop(ExitReason.Default, LoopDel, null);
+
             ProgressMeter.HideProgressMeter(base.Actor, flag);
+
             if (interestChosen.PercentageResearchDone >= 100f)
             {
-                definition.CurrInterestType.currInterestPoints++;
+                definition.CurrInterestType.modifyInterestLevel(1, base.Actor.SimDescription.mSimDescriptionId, definition.CurrInterestType.Guid);
                 if (base.Actor.IsSelectable)
                 {
                     Audio.StartObjectSound(base.Target.ObjectId, "sting_repair_success", false);
@@ -164,7 +167,6 @@ namespace Lyralei.InterestMod
 
         public void ShowThoughtBalloonForInterest()
         {
-
             if (base.Actor.ThoughtBalloonManager == null)
             {
                 return;
@@ -241,8 +243,10 @@ namespace Lyralei.InterestMod
             {
                 return false;
             }
+
             float researchRate = GetFinishedResearchRate();
             ProgressMeter.GlowType glowType = ProgressMeter.GlowType.Strong;
+
             if (researchRate < 1f)
             {
                 glowType = ProgressMeter.GlowType.None;
@@ -251,14 +255,16 @@ namespace Lyralei.InterestMod
             {
                 glowType = ProgressMeter.GlowType.Weak;
             }
+
             researchRate *= deltaTime;
             interestChosen.PercentageResearchDone += researchRate * 100f / Tunables.kAmountOfPagesASimReadsResearch; // Amount of pages the sim will read (30f pages currently)
             if (interestChosen.PercentageResearchDone > 100f)
             {
                 interestChosen.PercentageResearchDone = 100f;
             }
+
             ProgressMeter.UpdateProgressMeter(base.Actor, interestChosen.PercentageResearchDone * 0.01f, glowType);
-            return interestChosen.PercentageResearchDone == 100f; // if percentage is 100, then consider it done!
+            return interestChosen.PercentageResearchDone >= 100f; // if percentage is 100, then consider it done!
         }
 
         public float GetFinishedResearchRate()
@@ -418,7 +424,7 @@ namespace Lyralei.InterestMod
             ProgressMeter.HideProgressMeter(base.Actor, flag);
             if (interestChosen.PercentageResearchDone >= 100f)
             {
-                definition.CurrInterestType.currInterestPoints++;
+                definition.CurrInterestType.modifyInterestLevel(1, base.Actor.SimDescription.mSimDescriptionId, definition.CurrInterestType.Guid);
             }
             else
             {
@@ -562,10 +568,10 @@ namespace Lyralei.InterestMod
             interestChosen.PercentageResearchDone += researchRate * 100f / (float)30f; //Turn into a tunable! Amount of pages the sim will read (30f pages currently)
             if (interestChosen.PercentageResearchDone >= 100f)
             {
-                interestChosen.currInterestPoints++;
+                interestChosen.PercentageResearchDone = 100f;
             }
             ProgressMeter.UpdateProgressMeter(base.Actor, interestChosen.PercentageResearchDone * 0.01f, glowType);
-            return interestChosen.PercentageResearchDone == 100f;
+            return interestChosen.PercentageResearchDone >= 100f;
         }
 
         public float GetFinishedResearchRate()

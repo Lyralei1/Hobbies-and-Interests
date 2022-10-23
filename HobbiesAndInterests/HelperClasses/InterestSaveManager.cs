@@ -1,5 +1,4 @@
-﻿using Battery;
-using Sims3.Gameplay;
+﻿using Sims3.Gameplay;
 using Sims3.Gameplay.Actors;
 using Sims3.Gameplay.CAS;
 using Sims3.Gameplay.Lyralei.InterestMod;
@@ -120,6 +119,7 @@ namespace Lyralei.InterestMod
                         }
 
                         bw.Write((ulong)interest.Guid);
+                        bw.Write(interest.mHasNotifiedPlayerAboutSocialSkilling);
 
                         bw.Write(interest.currInterestPoints);
                         bw.Write(interest.mPointsBeforeAddingInterestPoint);
@@ -239,6 +239,11 @@ namespace Lyralei.InterestMod
                             sb.AppendLine("    interestGUID: " + interestGUID.ToString() + " - " + typeVer.ToString());
 
                             interests[a].mInterestsGuid = (InterestTypes)interestGUID;
+
+                            bool playerHasBeenNotifiedSocial = reader.ReadBoolean();
+                            sb.AppendLine("    playerHasBeenNotifiedSocial: " + playerHasBeenNotifiedSocial.ToString());
+
+                            interests[a].mHasNotifiedPlayerAboutSocialSkilling = playerHasBeenNotifiedSocial;
 
                             int level = reader.ReadInt32();
                             sb.AppendLine("    level: " + level.ToString());

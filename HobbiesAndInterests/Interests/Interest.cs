@@ -10,6 +10,7 @@ using Lyralei;
 using Lyralei.InterestMod;
 using Sims3.Gameplay.Actors;
 using Sims3.Gameplay.Core;
+using Sims3.Gameplay.EventSystem;
 
 namespace Sims3.Gameplay.Lyralei.InterestMod
 {
@@ -51,6 +52,14 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
         public List<TraitNames> traitPenalty = new List<TraitNames>();
 
         public List<Hobby> mHobbies;
+
+        public EventListener sHobbySkillListener = null;
+
+        public EventListener sHobbyInteractionListener = null;
+
+        public bool mHasNotifiedPlayerAboutSocialSkilling = false;
+
+
         //}
 
         //[Persistable(false)]
@@ -264,6 +273,10 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                         {
                             sim.mSim.ShowTNSIfSelectable("I'm feeling pretty passionate about the " + InterestManager.mSavedSimInterests[desc][i].mInterestsGuid.ToString() + " interest! I really should try out the different hobbies it comes with... (Newly unlocked hobbies can be seen under Sim > Interests & hobbies > See interests of sim...)", StyledNotification.NotificationStyle.kSimTalking);
                         }
+                        else if(currInterestPoints > 11 && sim.mSim.IsActiveSim)
+                        {
+                            sim.mSim.ShowTNSIfSelectable(sim.FullName + "'s interest for " + type.ToString() + " has gone up! Their influence is now: " + currInterestPoints.ToString() + " (20 is super passionate, 1 is dislike)", StyledNotification.NotificationStyle.kSimTalking);
+                        }
                     }
                 }
             }
@@ -307,26 +320,30 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
 
             public List<int> mRequiredSkillPoints = new List<int>();
 
+            public List<int> mOptionalSkillPoints = new List<int>();
+
             public List<SkillNames> mSkillsOptional = new List<SkillNames>();
 
             public bool mIsMasterInHobby = false;
 
             public List<HobbyChallenge> mHobbyChallenges = new List<HobbyChallenge>();
 
-            public bool isCompleted(Sim sim, List<SkillNames> requiredSkills)
+            public virtual bool IsCompleted(Sim sim, List<SkillNames> requiredSkills, List<int> mRequiredSkillPoints)
             {
                 int amountMasteredSkills = 0;
                 if (requiredSkills.Count != 0)
                 {
+                    int index = 0;
                     foreach (SkillNames skill in requiredSkills)
                     {
                         int skillLevel = sim.SkillManager.GetSkillLevel(skill);
-
-                        if (skillLevel == 10)
+                        if (skillLevel == mRequiredSkillPoints[index])
                         {
                             amountMasteredSkills++;
                         }
+                        index++;
                     }
+
                     if (requiredSkills.Count == amountMasteredSkills)
                     {
                         return true;
@@ -342,6 +359,7 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
             public string mDescription = "";
             public Interest mLinkedInterestInstance = null;
             public bool mIsCompleted = false;
+
         }
     }
 }

@@ -1,14 +1,20 @@
-﻿using Sims3.Gameplay.Lyralei.InterestMod;
+﻿using Sims3.Gameplay.Autonomy;
+using Sims3.Gameplay.Interactions;
+using Sims3.Gameplay.Interfaces;
+using Sims3.Gameplay.Lyralei.InterestMod;
+using Sims3.Gameplay.Socializing;
+using Sims3.Gameplay.Utilities;
 using Sims3.SimIFace;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 
 namespace Lyralei.InterestMod
 {
     public static class CommonHelpers
     {
-        public static Dictionary<Key, Value> MergeInPlace<Key, Value>(this Dictionary<Key, Value> left, Dictionary<Key, Value> right)
+        public static Dictionary<Key, Value> MergeInPlace<Key, Value>(Dictionary<Key, Value> left, Dictionary<Key, Value> right)
         {
             if (left == null)
             {
@@ -28,6 +34,36 @@ namespace Lyralei.InterestMod
             }
 
             return left;
+        }
+
+        public static bool ReplaceRHSThatHasNoProcedularMethod<CLASSNAME>(string action, string newFunction, bool isAfterUpdate)
+        {
+            MethodInfo method2 = typeof(InterestSocialCallback).GetMethod(newFunction);
+            if (method2 == null)
+            {
+                InterestManager.print(newFunction + ": New Not Found");
+            }
+            List<SocialRuleRHS> list2 = SocialRuleRHS.Get(action);
+            if (list2 == null)
+            {
+                InterestManager.print(action + ": Action Not Found");
+                return false;
+            }
+            bool flag = false;
+            foreach (SocialRuleRHS item in list2)
+            {
+                if (item.ProceduralEffectBeforeUpdate == null && !isAfterUpdate)
+                {
+                    item.mProceduralEffectBeforeUpdate = method2;
+                    flag = true;
+                }
+                if (item.ProceduralEffectAfterUpdate == null && isAfterUpdate)
+                {
+                    item.mProceduralEffectAfterUpdate = method2;
+                    flag = true;
+                }
+            }
+            return flag;
         }
 
         public static float DotProduct(Vector3 a, Vector3 b)

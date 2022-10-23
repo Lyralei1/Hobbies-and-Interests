@@ -24,6 +24,9 @@ namespace Sims3.Gameplay.Lyralei.InterestsAndHobbies
         [Tunable]
         public static bool kCanAcceptDynamicallyAssignSkillsToTownies = true;
 
+        [Tunable]
+        public static bool kMayTowniesPerformHobbiesAutonomously = true;
+
         /* 
          * ===================================================
          * ||                                               ||

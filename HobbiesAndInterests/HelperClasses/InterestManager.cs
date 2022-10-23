@@ -687,6 +687,9 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                     {
                         if(mSavedSimInterests[description.SimDescriptionId][i].currInterestPoints >= mSavedSimInterests[description.SimDescriptionId][i].mMaxForSocialLevel)
                         {
+                            if (!mSavedSimInterests[description.SimDescriptionId][i].mHasNotifiedPlayerAboutSocialSkilling) { description.CreatedSim.ShowTNSIfSelectable("I can no longer gain influence from talking about my interest... maybe I should spend more time with my hobbies instead...", StyledNotification.NotificationStyle.kSimTalking); }
+                            mSavedSimInterests[description.SimDescriptionId][i].mHasNotifiedPlayerAboutSocialSkilling = true;
+
                             return false;
                         }
                     }

@@ -17,6 +17,7 @@ using Sims3.SimIFace;
 using Sims3.UI;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 using System.Xml;
 
@@ -33,6 +34,7 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
         private static EventListener sBoughtObjectLister = null;
         private static EventListener sSimInstantiatedListener = null;
         public static EventListener sAgeSettingsHasChanged = null;
+
         public static AlarmHandle sAlarmTownieEAFixes = AlarmHandle.kInvalidHandle;
 
         static GlobalOptionsHobbiesAndInterests()
@@ -40,15 +42,12 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
             World.sOnWorldLoadFinishedEventHandler += new EventHandler(OnWorldLoadFinished);
             World.sOnWorldQuitEventHandler += new EventHandler(OnWorldQuit);
             LoadSaveManager.ObjectGroupsPreLoad += new ObjectGroupsPreLoadHandler(OnPreload);
-
             //LoadSaveManager.ObjectGroupsPreLoad += new ObjectGroupsPreLoadHandler(ParseBooks);
             //World.sOnStartupAppEventHandler += new EventHandler(OnStartupApp);
+            int test = 1;
         }
 
-        [Persistable(false)] static string mcurrentVersion = "1.0.0";
-        [Persistable(true)] static string msavedversion;
-
-        [Persistable(true)] static bool didAllmagazines = false;
+        [PersistableStatic] static bool didAllmagazines = false;
 
         [PersistableStatic]
         protected static PersistedDataInterests sSettings;
@@ -99,10 +98,8 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
 
         public static void OnWorldLoadFinished(object sender, EventArgs e)
         {
-
             try
             {
-
                 // Populate interestType helper list if necessary
                 InitInterestTypesList();
 
@@ -116,7 +113,6 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
 
                 // Get all sims in town
                 Sim[] objects = Sims3.Gameplay.Queries.GetObjects<Sim>();
-
 
                 // GetSimIdAndSimNames(objects);
 
@@ -170,7 +166,7 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                     }
                 }
 
-                sAlarmTownieEAFixes = AlarmManager.Global.AddAlarm(5f, TimeUnit.Minutes, TownieInterestHelper.TownieHobbyFixer, "TownieFixes", AlarmType.NeverPersisted, null);
+                //sAlarmTownieEAFixes = AlarmManager.Global.AddAlarm(5f, TimeUnit.Minutes, TownieInterestHelper.TownieHobbyFixer, "TownieFixes", AlarmType.NeverPersisted, null);
 
 
                 //print("Count sims at End" + InterestManager.mSavedSimInterests.Count.ToString()); //84
@@ -320,6 +316,33 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
             }
         }
 
+        private static Dictionary<string, string> SocialDataAfterUpdateOverrides = new Dictionary<string, string>()
+        {
+            {"Share Interests" , "CallbackGeneralInterestSharing"},
+            {"Talk About Going Green" , "CallbackTalkingAboutEnvironment"},
+            {"Talk About Recycling" , "CallbackTalkingAboutEnvironment"},
+            {"Talk About Renewable Energy" , "CallbackTalkingAboutEnvironment"},
+            {"Talk About Composting" , "CallbackTalkingAboutEnvironment"},
+            {"AskAboutFish" , "CallbackTalkingAboutEnvironment"},
+            {"Applaud Vegetarianism" , "CallbackTalkingAboutEnvironment"},
+            {"Boast About Gardening Glory" , "CallbackTalkingAboutEnvironment"},
+            {"Boast About Fishing Feats" , "CallbackTalkingAboutEnvironment"},
+            {"Boast About Reviving Plant" , "CallbackTalkingAboutEnvironment"},
+            {"Compliment Garden" , "CallbackTalkingAboutEnvironment"},
+            {"Enthuse About Outdoors" , "CallbackTalkingAboutEnvironment"},
+            {"Mock Vegetarianism" , "CallbackTalkingAboutEnvironment"},
+            {"Talk About Great Outdoors" , "CallbackTalkingAboutEnvironment"},
+            {"Enthuse About Garlic" , "CallbackTalkingAboutEnvironment"},
+            {"Enthuse About Rainbows" , "CallbackTalkingAboutEnvironment"},
+            {"Talk About Flowers" , "CallbackTalkingAboutEnvironment"},
+            {"Talk About Rain" , "CallbackTalkingAboutEnvironment"},
+            {"Talk About Snow" , "CallbackTalkingAboutEnvironment"},
+            {"Talk About Hail" , "CallbackTalkingAboutEnvironment"},
+            {"Talk About Fog" , "CallbackTalkingAboutEnvironment"},
+            {"Talk About Cold" , "CallbackTalkingAboutEnvironment"},
+            {"Talk About Heat" , "CallbackTalkingAboutEnvironment"},
+        };
+
         public static void LoadSocialData(string spreadsheet)
         {
             try
@@ -337,53 +360,29 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                         ParserFunctions.TryParseEnum(element.GetAttribute("com"), out intendedCom, CommodityTypes.Undefined);
                         ActionData data = new ActionData(element.GetAttribute("key"), intendedCom, ProductVersion.BaseGame, table, isEp5Installed);
                         ActionData.Add(data);
-                        
-
-                        //CommodityTypes types;
-                        //XmlElementLookup table = new XmlElementLookup(element);
-                        //if (!ParserFunctions.TryParseEnum<CommodityTypes>(element.GetAttribute("com"), out types, CommodityTypes.Undefined))
-                        //{
-                        //    //BuffForJournal.print("Can't parse, will exit.");
-                        //    print("Commodity couldn't be f");
-                        //    return;
-                        //}
-
-                        //print(element.GetAttribute("key"));
-
-                        //ActionData data = new ActionData(element.GetAttribute("key"), types, ProductVersion.BaseGame, table, isEp5Installed);
-                        //if(data == null)
-                        //{
-                        //    print("Data was null");
-                        //    return;
-                        //}
-
-                        //If it's an override, let's override ;)
-                        if (ActionData.sData.ContainsKey(element.GetAttribute("key")) && SocialRuleRHS.sDictionary.ContainsKey(element.GetAttribute("key")) && InterestSocialCallback.mOverridableInteraction.ContainsKey(element.GetAttribute("key")))
-                        {
-                            foreach (KeyValuePair<string, List<SocialRuleRHS>> kpv in SocialRuleRHS.sDictionary)
-                            {
-                                for (int i = 0; i < kpv.Value.Count; i++)
-                                {
-                                    if (kpv.Value[i].Key == element.GetAttribute("key"))
-                                    {
-                                        Type typeFromHandle = typeof(InterestSocialCallback);
-                                        kpv.Value[i].mProceduralEffectAfterUpdate = typeFromHandle.GetMethod(InterestSocialCallback.mOverridableInteraction[element.GetAttribute("key")]);
-                                    }
-                                }
-                            }
-                            print("Should've overriden it...");
-                            ActionData.sData[element.GetAttribute("key")] = data;
-                        }
-                        else
-                        {
-                            ActionData.Add(data);
-                        }
                     }
                 }
+
+                foreach(KeyValuePair<string, string> kpv in SocialDataAfterUpdateOverrides)
+                {
+                    LoadOverrideInfo(kpv.key, kpv.value, true);
+                }
+
+
             }
             catch (Exception ex)
             {
                 print(ex.Message.ToString() + "\n" + ex.Source.ToString());
+            }
+        }
+
+        public static void LoadOverrideInfo(string key, string newFunctional, bool isAfterUpdate)
+        {
+            ActionData dataAction = ActionData.Get(key);
+
+            if (dataAction != null)
+            {
+                CommonHelpers.ReplaceRHSThatHasNoProcedularMethod<InterestSocialCallback>(dataAction.Key, newFunctional, true);
             }
         }
 
@@ -674,7 +673,9 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                     pair.InteractionDefinition.GetType() == SimDebugInteractions.GenerateInterestBook.Singleton.GetType() ||
                     pair.InteractionDefinition.GetType() == SimDebugInteractions.ExtractSaveData.Singleton.GetType() ||
                     pair.InteractionDefinition.GetType() == SimDebugInteractions.SaveTheData.Singleton.GetType() ||
-                    pair.InteractionDefinition.GetType() == SimDebugInteractions.CheckTheSavedDataList.Singleton.GetType()
+                    pair.InteractionDefinition.GetType() == SimDebugInteractions.CheckTheSavedDataList.Singleton.GetType() ||
+                    pair.InteractionDefinition.GetType() == SimDebugInteractions.ChooseAHobby.Singleton.GetType()
+
                     )
                 {
                     return;
@@ -692,6 +693,8 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
             sim.AddInteraction(SimDebugInteractions.ExtractSaveData.Singleton);
             sim.AddInteraction(SimDebugInteractions.SaveTheData.Singleton);
             sim.AddInteraction(SimDebugInteractions.CheckTheSavedDataList.Singleton);
+            sim.AddInteraction(SimDebugInteractions.ChooseAHobby.Singleton);
+
         }
 
         public static void AddInteractionsObjects(GameObject gameObj)
