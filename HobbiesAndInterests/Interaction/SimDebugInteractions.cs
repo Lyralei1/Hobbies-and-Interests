@@ -134,165 +134,166 @@ namespace Lyralei
                 }
             }
         }
-        public class CheckInterestDetails : ImmediateInteraction<Sim, Sim>
-        {
-            public static readonly InteractionDefinition Singleton = new Definition();
 
-            public override bool Run()
-            {
-                List<Interest> interests = InterestManager.mSavedSimInterests[base.Target.SimDescription.SimDescriptionId];
+        //public class CheckInterestDetails : ImmediateInteraction<Sim, Sim>
+        //{
+        //    public static readonly InteractionDefinition Singleton = new Definition();
 
-                StringBuilder str = new StringBuilder();
+        //    public override bool Run()
+        //    {
+        //        List<Interest> interests = InterestManager.mSavedSimInterests[base.Target.SimDescription.SimDescriptionId];
 
-                str.Append("ID: " + base.Target.SimDescription.SimDescriptionId.ToString() + '\n');
-                str.Append("Owner: " + base.Target.SimDescription.FullName.ToString() + '\n');
-                str.Append('\n');
+        //        StringBuilder str = new StringBuilder();
 
-                //foreach (Interest interest in interests)
-                for (int i = 0; i < interests.Count; i++)
-                {
-                    if(interests[i].Guid == InterestTypes.Environment)
-                    {
-                        foreach(Interest.Hobby hobby in interests[i].hobbies)
-                        {
-                            if(hobby is Sims3.Gameplay.Lyralei.InterestMod.Environment.ClimateChangeHobby)
-                            {
-                                Sims3.Gameplay.Lyralei.InterestMod.Environment.ClimateChangeHobby climateChange = hobby as Sims3.Gameplay.Lyralei.InterestMod.Environment.ClimateChangeHobby;
-                                str.Append(climateChange.mName + '\n');
-                                str.Append(climateChange.mDescription + '\n');
-                                str.Append("Is vegan? " + climateChange.IsVegetarian.ToString() + '\n');
-                                str.Append("Plants donated " + climateChange.PlantSamplesDonated + '\n');
-                                str.Append("Sims converted " + climateChange.SimsConverted + '\n');
-                                str.Append("Tree planted " + climateChange.TreesPlantedAndGrown + '\n');
-                                str.Append("Is master: " + climateChange.mIsMasterInHobby + '\n');
-                                str.Append('\n');
-                            }
-                        }
-                    }
-                    //Interest interest = InterestManager.mSavedSimInterests[base.Target.SimDescription.SimDescriptionId][c];
-                }
+        //        str.Append("ID: " + base.Target.SimDescription.SimDescriptionId.ToString() + '\n');
+        //        str.Append("Owner: " + base.Target.SimDescription.FullName.ToString() + '\n');
+        //        str.Append('\n');
 
-                InterestManager.print(str.ToString());
+        //        //foreach (Interest interest in interests)
+        //        for (int i = 0; i < interests.Count; i++)
+        //        {
+        //            if(interests[i].Guid == InterestTypes.Environment)
+        //            {
+        //                foreach(Interest.Hobby hobby in interests[i].hobbies)
+        //                {
+        //                    if(hobby is Sims3.Gameplay.Lyralei.InterestMod.Environment.ClimateChangeHobby)
+        //                    {
+        //                        Sims3.Gameplay.Lyralei.InterestMod.Environment.ClimateChangeHobby climateChange = hobby as Sims3.Gameplay.Lyralei.InterestMod.Environment.ClimateChangeHobby;
+        //                        str.Append(climateChange.mName + '\n');
+        //                        str.Append(climateChange.mDescription + '\n');
+        //                        str.Append("Is vegan? " + climateChange.IsVegetarian.ToString() + '\n');
+        //                        str.Append("Plants donated " + climateChange.PlantSamplesDonated + '\n');
+        //                        str.Append("Sims converted " + climateChange.SimsConverted + '\n');
+        //                        str.Append("Tree planted " + climateChange.TreesPlantedAndGrown + '\n');
+        //                        str.Append("Is master: " + climateChange.mIsMasterInHobby + '\n');
+        //                        str.Append('\n');
+        //                    }
+        //                }
+        //            }
+        //            //Interest interest = InterestManager.mSavedSimInterests[base.Target.SimDescription.SimDescriptionId][c];
+        //        }
 
-                return true;
-            }
+        //        InterestManager.print(str.ToString());
 
-            [DoesntRequireTuning]
-            public sealed class Definition : ImmediateInteractionDefinition<Sim, Sim, CheckInterestDetails>
-            {
-                public override string GetInteractionName(Sim a, Sim target, InteractionObjectPair interaction)
-                {
-                    return "Check interest Details";
-                }
-                public override bool Test(Sim a, Sim target, bool isAutonomous, ref GreyedOutTooltipCallback greyedOutTooltipCallback)
-                {
-                    return true;
-                }
-            }
-        }
+        //        return true;
+        //    }
 
-        public class ShowHobbiesUI : ImmediateInteraction<Sim, Sim>
-        {
-            public static readonly InteractionDefinition Singleton = new Definition();
+        //    [DoesntRequireTuning]
+        //    public sealed class Definition : ImmediateInteractionDefinition<Sim, Sim, CheckInterestDetails>
+        //    {
+        //        public override string GetInteractionName(Sim a, Sim target, InteractionObjectPair interaction)
+        //        {
+        //            return "Check interest Details";
+        //        }
+        //        public override bool Test(Sim a, Sim target, bool isAutonomous, ref GreyedOutTooltipCallback greyedOutTooltipCallback)
+        //        {
+        //            return true;
+        //        }
+        //    }
+        //}
 
-            public override bool Run()
-            {
-                try
-                {
-                    if(!InterestManager.mSavedSimInterests.ContainsKey(base.Target.SimDescription.SimDescriptionId))
-                    {
-                        InterestManager.print("SimDescription doesn't exist in key");
-                        return true;
-                    }
+        //public class ShowHobbiesUI : ImmediateInteraction<Sim, Sim>
+        //{
+        //    public static readonly InteractionDefinition Singleton = new Definition();
 
-                    List<Interest> interests = InterestManager.mSavedSimInterests[base.Target.SimDescription.SimDescriptionId];
+        //    public override bool Run()
+        //    {
+        //        try
+        //        {
+        //            if(!InterestManager.mSavedSimInterests.ContainsKey(base.Target.SimDescription.SimDescriptionId))
+        //            {
+        //                InterestManager.print("SimDescription doesn't exist in key");
+        //                return true;
+        //            }
 
-                    StringBuilder str = new StringBuilder();
+        //            List<Interest> interests = InterestManager.mSavedSimInterests[base.Target.SimDescription.SimDescriptionId];
 
-                    //foreach (Interest interest in interests)
-                    for (int i = 0; i < interests.Count; i++)
-                    {
-                        if (interests[i].Guid == InterestTypes.Environment)
-                        {
-                            foreach (Interest.Hobby hobby in interests[i].hobbies)
-                            {
-                                if (hobby is Sims3.Gameplay.Lyralei.InterestMod.Environment.ClimateChangeHobby)
-                                {
-                                    Sims3.Gameplay.Lyralei.InterestMod.Environment.ClimateChangeHobby climateChange = hobby as Sims3.Gameplay.Lyralei.InterestMod.Environment.ClimateChangeHobby;
-                                    str.Append(climateChange.mName + '\n');
-                                    str.Append(climateChange.mDescription + '\n');
-                                    str.Append("Is vegan? " + climateChange.IsVegetarian.ToString() + '\n');
-                                    str.Append("Plants donated " + climateChange.PlantSamplesDonated + '\n');
-                                    str.Append("Sims converted " + climateChange.SimsConverted + '\n');
-                                    str.Append("Tree planted " + climateChange.TreesPlantedAndGrown + '\n');
-                                    str.Append("Is master: " + climateChange.mIsMasterInHobby + '\n');
+        //            StringBuilder str = new StringBuilder();
 
-                                    str.Append("Hobbies required:" + '\n');
+        //            //foreach (Interest interest in interests)
+        //            for (int i = 0; i < interests.Count; i++)
+        //            {
+        //                if (interests[i].Guid == InterestTypes.Environment)
+        //                {
+        //                    foreach (Interest.Hobby hobby in interests[i].hobbies)
+        //                    {
+        //                        if (hobby is Sims3.Gameplay.Lyralei.InterestMod.Environment.ClimateChangeHobby)
+        //                        {
+        //                            Sims3.Gameplay.Lyralei.InterestMod.Environment.ClimateChangeHobby climateChange = hobby as Sims3.Gameplay.Lyralei.InterestMod.Environment.ClimateChangeHobby;
+        //                            str.Append(climateChange.mName + '\n');
+        //                            str.Append(climateChange.mDescription + '\n');
+        //                            str.Append("Is vegan? " + climateChange.IsVegetarian.ToString() + '\n');
+        //                            str.Append("Plants donated " + climateChange.PlantSamplesDonated + '\n');
+        //                            str.Append("Sims converted " + climateChange.SimsConverted + '\n');
+        //                            str.Append("Tree planted " + climateChange.TreesPlantedAndGrown + '\n');
+        //                            str.Append("Is master: " + climateChange.mIsMasterInHobby + '\n');
 
-                                    //climateChange.mRequiredSkillPoints = InterestManager.RequiredSkillsLevelForAgeSettings(climateChange.mRequiredSkillsForHobby, base.Target.SimDescription.SimDescriptionId);
-                                    for (int h = 0; h < climateChange.mRequiredSkillsForHobby.Count; h++)
-                                    {
-                                        str.Append(climateChange.mRequiredSkillsForHobby[h].ToString() + " - " + "Points in: " + base.Actor.SkillManager.GetSkillLevel(climateChange.mRequiredSkillsForHobby[h]).ToString() + " (mastered at level: " + climateChange.mRequiredSkillPoints[h].ToString() + '\n');
-                                        str.Append('\n');
-                                    }
-                                    str.Append('\n');
-                                }
-                                if (hobby is Sims3.Gameplay.Lyralei.InterestMod.Environment.NatureHobby)
-                                {
-                                    Sims3.Gameplay.Lyralei.InterestMod.Environment.NatureHobby natureHobby = hobby as Sims3.Gameplay.Lyralei.InterestMod.Environment.NatureHobby;
-                                    str.Append(natureHobby.mName + '\n');
-                                    str.Append(natureHobby.mDescription + '\n');
-                                    str.Append("Fish caught " + natureHobby.FishCaughtCount.ToString() + '\n');
-                                    str.Append("Hobbies required:" + '\n');
+        //                            str.Append("Hobbies required:" + '\n');
 
-                                    //natureHobby.mRequiredSkillPoints = InterestManager.RequiredSkillsLevelForAgeSettings(natureHobby.mRequiredSkillsForHobby, base.Target.SimDescription.SimDescriptionId);
-                                    for (int h = 0; h < natureHobby.mRequiredSkillsForHobby.Count; h++)
-                                    {
-                                        str.Append(natureHobby.mRequiredSkillsForHobby[h].ToString() + " - " + "Points in: " + base.Actor.SkillManager.GetSkillLevel(natureHobby.mRequiredSkillsForHobby[h]).ToString() + " (mastered at level: " + natureHobby.mRequiredSkillPoints[h].ToString() + '\n');
-                                    }
-                                    str.Append('\n');
-                                }
-                                if (hobby is Sims3.Gameplay.Lyralei.InterestMod.Environment.OffTheGrid)
-                                {
-                                    Sims3.Gameplay.Lyralei.InterestMod.Environment.OffTheGrid offTheGrid = hobby as Sims3.Gameplay.Lyralei.InterestMod.Environment.OffTheGrid;
-                                    str.Append(offTheGrid.mName + '\n');
-                                    str.Append(offTheGrid.mDescription + '\n');
-                                    str.Append("Hobbies required:" + '\n');
+        //                            //climateChange.mRequiredSkillPoints = InterestManager.RequiredSkillsLevelForAgeSettings(climateChange.mRequiredSkillsForHobby, base.Target.SimDescription.SimDescriptionId);
+        //                            for (int h = 0; h < climateChange.mRequiredSkillsForHobby.Count; h++)
+        //                            {
+        //                                str.Append(climateChange.mRequiredSkillsForHobby[h].ToString() + " - " + "Points in: " + base.Actor.SkillManager.GetSkillLevel(climateChange.mRequiredSkillsForHobby[h]).ToString() + " (mastered at level: " + climateChange.mRequiredSkillPoints[h].ToString() + '\n');
+        //                                str.Append('\n');
+        //                            }
+        //                            str.Append('\n');
+        //                        }
+        //                        if (hobby is Sims3.Gameplay.Lyralei.InterestMod.Environment.NatureHobby)
+        //                        {
+        //                            Sims3.Gameplay.Lyralei.InterestMod.Environment.NatureHobby natureHobby = hobby as Sims3.Gameplay.Lyralei.InterestMod.Environment.NatureHobby;
+        //                            str.Append(natureHobby.mName + '\n');
+        //                            str.Append(natureHobby.mDescription + '\n');
+        //                            str.Append("Fish caught " + natureHobby.FishCaughtCount.ToString() + '\n');
+        //                            str.Append("Hobbies required:" + '\n');
 
-                                    //offTheGrid.mRequiredSkillPoints = InterestManager.RequiredSkillsLevelForAgeSettings(offTheGrid.mRequiredSkillsForHobby, base.Target.SimDescription.SimDescriptionId);
-                                    for (int h = 0; h < offTheGrid.mRequiredSkillsForHobby.Count; h++)
-                                    {
-                                        str.Append(offTheGrid.mRequiredSkillsForHobby[h].ToString() + " - " + "Points in: " + base.Actor.SkillManager.GetSkillLevel(offTheGrid.mRequiredSkillsForHobby[h]).ToString() + " (mastered at level: " + offTheGrid.mRequiredSkillPoints[h].ToString() + '\n');
-                                    }
-                                    str.Append('\n');
-                                }
-                            }
-                        }
-                        //Interest interest = InterestManager.mSavedSimInterests[base.Target.SimDescription.SimDescriptionId][c];
-                    }
-                    InterestManager.print(str.ToString());
-                    return true;
-                }
-                catch(Exception ex)
-                {
-                    InterestManager.print(ex.ToString());
-                    return true;
-                }
-            }
+        //                            //natureHobby.mRequiredSkillPoints = InterestManager.RequiredSkillsLevelForAgeSettings(natureHobby.mRequiredSkillsForHobby, base.Target.SimDescription.SimDescriptionId);
+        //                            for (int h = 0; h < natureHobby.mRequiredSkillsForHobby.Count; h++)
+        //                            {
+        //                                str.Append(natureHobby.mRequiredSkillsForHobby[h].ToString() + " - " + "Points in: " + base.Actor.SkillManager.GetSkillLevel(natureHobby.mRequiredSkillsForHobby[h]).ToString() + " (mastered at level: " + natureHobby.mRequiredSkillPoints[h].ToString() + '\n');
+        //                            }
+        //                            str.Append('\n');
+        //                        }
+        //                        if (hobby is Sims3.Gameplay.Lyralei.InterestMod.Environment.OffTheGrid)
+        //                        {
+        //                            Sims3.Gameplay.Lyralei.InterestMod.Environment.OffTheGrid offTheGrid = hobby as Sims3.Gameplay.Lyralei.InterestMod.Environment.OffTheGrid;
+        //                            str.Append(offTheGrid.mName + '\n');
+        //                            str.Append(offTheGrid.mDescription + '\n');
+        //                            str.Append("Hobbies required:" + '\n');
 
-            [DoesntRequireTuning]
-            public sealed class Definition : ImmediateInteractionDefinition<Sim, Sim, ShowHobbiesUI>
-            {
-                public override string GetInteractionName(Sim a, Sim target, InteractionObjectPair interaction)
-                {
-                    return "Show Hobbies UI";
-                }
-                public override bool Test(Sim a, Sim target, bool isAutonomous, ref GreyedOutTooltipCallback greyedOutTooltipCallback)
-                {
-                    return true;
-                }
-            }
-        }
+        //                            //offTheGrid.mRequiredSkillPoints = InterestManager.RequiredSkillsLevelForAgeSettings(offTheGrid.mRequiredSkillsForHobby, base.Target.SimDescription.SimDescriptionId);
+        //                            for (int h = 0; h < offTheGrid.mRequiredSkillsForHobby.Count; h++)
+        //                            {
+        //                                str.Append(offTheGrid.mRequiredSkillsForHobby[h].ToString() + " - " + "Points in: " + base.Actor.SkillManager.GetSkillLevel(offTheGrid.mRequiredSkillsForHobby[h]).ToString() + " (mastered at level: " + offTheGrid.mRequiredSkillPoints[h].ToString() + '\n');
+        //                            }
+        //                            str.Append('\n');
+        //                        }
+        //                    }
+        //                }
+        //                //Interest interest = InterestManager.mSavedSimInterests[base.Target.SimDescription.SimDescriptionId][c];
+        //            }
+        //            InterestManager.print(str.ToString());
+        //            return true;
+        //        }
+        //        catch(Exception ex)
+        //        {
+        //            InterestManager.print(ex.ToString());
+        //            return true;
+        //        }
+        //    }
+
+        //    [DoesntRequireTuning]
+        //    public sealed class Definition : ImmediateInteractionDefinition<Sim, Sim, ShowHobbiesUI>
+        //    {
+        //        public override string GetInteractionName(Sim a, Sim target, InteractionObjectPair interaction)
+        //        {
+        //            return "Show Hobbies UI";
+        //        }
+        //        public override bool Test(Sim a, Sim target, bool isAutonomous, ref GreyedOutTooltipCallback greyedOutTooltipCallback)
+        //        {
+        //            return true;
+        //        }
+        //    }
+        //}
 
         public class ManipulateHobbyPoints : ImmediateInteraction<Sim, Sim>
         {
@@ -343,77 +344,77 @@ namespace Lyralei
             }
         }
 
-        public class HasBuggedInterests : ImmediateInteraction<Sim, Sim>
-        {
-            public static readonly InteractionDefinition Singleton = new Definition();
+        //public class HasBuggedInterests : ImmediateInteraction<Sim, Sim>
+        //{
+        //    public static readonly InteractionDefinition Singleton = new Definition();
 
-            public override bool Run()
-            {
-                InterestManager.FixWeirdInterestData(base.Target.SimDescription);
-                return true;
-            }
+        //    public override bool Run()
+        //    {
+        //        InterestManager.FixWeirdInterestData(base.Target.SimDescription);
+        //        return true;
+        //    }
 
-            [DoesntRequireTuning]
-            public sealed class Definition : ImmediateInteractionDefinition<Sim, Sim, HasBuggedInterests>
-            {
-                public override string GetInteractionName(Sim a, Sim target, InteractionObjectPair interaction)
-                {
-                    return "Check for Bugged Interests";
-                }
-                public override bool Test(Sim a, Sim target, bool isAutonomous, ref GreyedOutTooltipCallback greyedOutTooltipCallback)
-                {
-                    return true;
-                }
-            }
-        }
+        //    [DoesntRequireTuning]
+        //    public sealed class Definition : ImmediateInteractionDefinition<Sim, Sim, HasBuggedInterests>
+        //    {
+        //        public override string GetInteractionName(Sim a, Sim target, InteractionObjectPair interaction)
+        //        {
+        //            return "Check for Bugged Interests";
+        //        }
+        //        public override bool Test(Sim a, Sim target, bool isAutonomous, ref GreyedOutTooltipCallback greyedOutTooltipCallback)
+        //        {
+        //            return true;
+        //        }
+        //    }
+        //}
 
-        public class ExtractSaveData : ImmediateInteraction<Sim, Sim>
-        {
-            public static readonly InteractionDefinition Singleton = new Definition();
+        //public class ExtractSaveData : ImmediateInteraction<Sim, Sim>
+        //{
+        //    public static readonly InteractionDefinition Singleton = new Definition();
 
-            public override bool Run()
-            {
-                InterestSaveManager.ImportInterestData();
-                return true;
-            }
+        //    public override bool Run()
+        //    {
+        //        InterestSaveManager.ImportInterestData();
+        //        return true;
+        //    }
 
-            [DoesntRequireTuning]
-            public sealed class Definition : ImmediateInteractionDefinition<Sim, Sim, ExtractSaveData>
-            {
-                public override string GetInteractionName(Sim a, Sim target, InteractionObjectPair interaction)
-                {
-                    return "Extract Save Data";
-                }
-                public override bool Test(Sim a, Sim target, bool isAutonomous, ref GreyedOutTooltipCallback greyedOutTooltipCallback)
-                {
-                    return true;
-                }
-            }
-        }
+        //    [DoesntRequireTuning]
+        //    public sealed class Definition : ImmediateInteractionDefinition<Sim, Sim, ExtractSaveData>
+        //    {
+        //        public override string GetInteractionName(Sim a, Sim target, InteractionObjectPair interaction)
+        //        {
+        //            return "Extract Save Data";
+        //        }
+        //        public override bool Test(Sim a, Sim target, bool isAutonomous, ref GreyedOutTooltipCallback greyedOutTooltipCallback)
+        //        {
+        //            return true;
+        //        }
+        //    }
+        //}
 
-        public class SaveTheData : ImmediateInteraction<Sim, Sim>
-        {
-            public static readonly InteractionDefinition Singleton = new Definition();
+        //public class SaveTheData : ImmediateInteraction<Sim, Sim>
+        //{
+        //    public static readonly InteractionDefinition Singleton = new Definition();
 
-            public override bool Run()
-            {
-                InterestSaveManager.ExportInterestData();
-                return true;
-            }
+        //    public override bool Run()
+        //    {
+        //        InterestSaveManager.ExportInterestData();
+        //        return true;
+        //    }
 
-            [DoesntRequireTuning]
-            public sealed class Definition : ImmediateInteractionDefinition<Sim, Sim, SaveTheData>
-            {
-                public override string GetInteractionName(Sim a, Sim target, InteractionObjectPair interaction)
-                {
-                    return "Save The Data";
-                }
-                public override bool Test(Sim a, Sim target, bool isAutonomous, ref GreyedOutTooltipCallback greyedOutTooltipCallback)
-                {
-                    return true;
-                }
-            }
-        }
+        //    [DoesntRequireTuning]
+        //    public sealed class Definition : ImmediateInteractionDefinition<Sim, Sim, SaveTheData>
+        //    {
+        //        public override string GetInteractionName(Sim a, Sim target, InteractionObjectPair interaction)
+        //        {
+        //            return "Save The Data";
+        //        }
+        //        public override bool Test(Sim a, Sim target, bool isAutonomous, ref GreyedOutTooltipCallback greyedOutTooltipCallback)
+        //        {
+        //            return true;
+        //        }
+        //    }
+        //}
 
         public class ChooseAHobby : ImmediateInteraction<Sim, Sim>
         {
@@ -453,7 +454,7 @@ namespace Lyralei
             {
                 public override string GetInteractionName(Sim a, Sim target, InteractionObjectPair interaction)
                 {
-                    return "Choose a Hobby (environment)";
+                    return "Check a Hobby (environment)";
                 }
                 public override bool Test(Sim a, Sim target, bool isAutonomous, ref GreyedOutTooltipCallback greyedOutTooltipCallback)
                 {
@@ -462,31 +463,31 @@ namespace Lyralei
             }
         }
 
-        public class CheckTheSavedDataList : ImmediateInteraction<Sim, Sim>
-        {
-            public static readonly InteractionDefinition Singleton = new Definition();
+        //public class CheckTheSavedDataList : ImmediateInteraction<Sim, Sim>
+        //{
+        //    public static readonly InteractionDefinition Singleton = new Definition();
 
-            public override bool Run()
-            {
-                Sim[] objects = Sims3.Gameplay.Queries.GetObjects<Sim>();
-                InterestManager.print("Sim data available: " + InterestManager.mSavedSimInterests.Count.ToString() + "   (Current population: " + objects.Length.ToString());
+        //    public override bool Run()
+        //    {
+        //        Sim[] objects = Sims3.Gameplay.Queries.GetObjects<Sim>();
+        //        InterestManager.print("Sim data available: " + InterestManager.mSavedSimInterests.Count.ToString() + "   (Current population: " + objects.Length.ToString());
 
-                return true;
-            }
+        //        return true;
+        //    }
 
-            [DoesntRequireTuning]
-            public sealed class Definition : ImmediateInteractionDefinition<Sim, Sim, CheckTheSavedDataList>
-            {
-                public override string GetInteractionName(Sim a, Sim target, InteractionObjectPair interaction)
-                {
-                    return "Check The Saved Data lists";
-                }
-                public override bool Test(Sim a, Sim target, bool isAutonomous, ref GreyedOutTooltipCallback greyedOutTooltipCallback)
-                {
-                    return true;
-                }
-            }
-        }
+        //    [DoesntRequireTuning]
+        //    public sealed class Definition : ImmediateInteractionDefinition<Sim, Sim, CheckTheSavedDataList>
+        //    {
+        //        public override string GetInteractionName(Sim a, Sim target, InteractionObjectPair interaction)
+        //        {
+        //            return "Check The Saved Data lists";
+        //        }
+        //        public override bool Test(Sim a, Sim target, bool isAutonomous, ref GreyedOutTooltipCallback greyedOutTooltipCallback)
+        //        {
+        //            return true;
+        //        }
+        //    }
+        //}
 
 
         public class GenerateInterestBook : ImmediateInteraction<Sim, Sim>

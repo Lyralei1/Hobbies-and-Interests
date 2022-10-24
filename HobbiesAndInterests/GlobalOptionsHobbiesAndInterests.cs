@@ -1,4 +1,5 @@
-﻿using Lyralei;
+﻿using HobbiesAndInterests.Career;
+using Lyralei;
 using Lyralei.InterestMod;
 using Sims3.Gameplay.Abstracts;
 using Sims3.Gameplay.Actors;
@@ -11,6 +12,7 @@ using Sims3.Gameplay.Objects;
 using Sims3.Gameplay.Objects.Electronics;
 using Sims3.Gameplay.Objects.Environment;
 using Sims3.Gameplay.Objects.Lyralei;
+using Sims3.Gameplay.Objects.RabbitHoles;
 using Sims3.Gameplay.Socializing;
 using Sims3.Gameplay.Utilities;
 using Sims3.SimIFace;
@@ -42,9 +44,9 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
             World.sOnWorldLoadFinishedEventHandler += new EventHandler(OnWorldLoadFinished);
             World.sOnWorldQuitEventHandler += new EventHandler(OnWorldQuit);
             LoadSaveManager.ObjectGroupsPreLoad += new ObjectGroupsPreLoadHandler(OnPreload);
+            Simulator.PostInit += CareerInstantiatorManager.PostInitCareer;
             //LoadSaveManager.ObjectGroupsPreLoad += new ObjectGroupsPreLoadHandler(ParseBooks);
             //World.sOnStartupAppEventHandler += new EventHandler(OnStartupApp);
-            int test = 1;
         }
 
         [PersistableStatic] static bool didAllmagazines = false;
@@ -212,6 +214,16 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                     sBoughtObjectLister = EventTracker.AddListener(EventTypeId.kBoughtObject, new ProcessEventDelegate(OnObjectBought));
                     sBoughtObjectLister = EventTracker.AddListener(EventTypeId.kObjectStateChanged, new ProcessEventDelegate(OnObjectBought));
                 }
+
+                foreach (CityHall rabbithole in Sims3.Gameplay.Queries.GetObjects<CityHall>())
+                {
+                    if (rabbithole != null)
+                    {
+                        CareerInstantiatorManager.AddInteractionsCareers(rabbithole);
+                        sBoughtObjectLister = EventTracker.AddListener(EventTypeId.kBoughtObject, new ProcessEventDelegate(OnObjectBought));
+                        sBoughtObjectLister = EventTracker.AddListener(EventTypeId.kObjectStateChanged, new ProcessEventDelegate(OnObjectBought));
+                    }
+                }
             }
             catch(Exception ex)
             {
@@ -231,8 +243,8 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                     sim.RemoveInteraction(new InteractionObjectPair(DebateEnvironment.Singleton, sim));
                     sim.RemoveInteraction(new InteractionObjectPair(RantAboutInterest.Singleton, sim));
                     sim.RemoveInteraction(new InteractionObjectPair(ConvinceToPursueInterest.Singleton, sim));
-                    sim.RemoveInteraction(new InteractionObjectPair(SimDebugInteractions.HasBuggedInterests.Singleton, sim));
-                    sim.RemoveInteraction(new InteractionObjectPair(SimDebugInteractions.ShowHobbiesUI.Singleton, sim));
+                    //sim.RemoveInteraction(new InteractionObjectPair(SimDebugInteractions.HasBuggedInterests.Singleton, sim));
+                    //sim.RemoveInteraction(new InteractionObjectPair(SimDebugInteractions.ShowHobbiesUI.Singleton, sim));
                     sim.RemoveInteraction(new InteractionObjectPair(SimDebugInteractions.GenerateInterestBook.Singleton, sim));
                 }
                 EventTracker.RemoveListener(sAgeSettingsHasChanged);
@@ -639,9 +651,9 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                 //    }
                 AddInteractionsObjects(obj);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                print("Solar didn't exist");
+                print(ex.ToString());
             }
             return ListenerAction.Keep;
         }
@@ -668,12 +680,12 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                     pair.InteractionDefinition.GetType() == DebateEnvironment.Singleton.GetType() ||
                     pair.InteractionDefinition.GetType() == RantAboutInterest.Singleton.GetType() ||
                     pair.InteractionDefinition.GetType() == ConvinceToPursueInterest.Singleton.GetType() ||
-                    pair.InteractionDefinition.GetType() == SimDebugInteractions.HasBuggedInterests.Singleton.GetType() ||
-                    pair.InteractionDefinition.GetType() == SimDebugInteractions.ShowHobbiesUI.Singleton.GetType() ||
+                    //pair.InteractionDefinition.GetType() == SimDebugInteractions.HasBuggedInterests.Singleton.GetType() ||
+                    //pair.InteractionDefinition.GetType() == SimDebugInteractions.ShowHobbiesUI.Singleton.GetType() ||
                     pair.InteractionDefinition.GetType() == SimDebugInteractions.GenerateInterestBook.Singleton.GetType() ||
-                    pair.InteractionDefinition.GetType() == SimDebugInteractions.ExtractSaveData.Singleton.GetType() ||
-                    pair.InteractionDefinition.GetType() == SimDebugInteractions.SaveTheData.Singleton.GetType() ||
-                    pair.InteractionDefinition.GetType() == SimDebugInteractions.CheckTheSavedDataList.Singleton.GetType() ||
+                    //pair.InteractionDefinition.GetType() == SimDebugInteractions.ExtractSaveData.Singleton.GetType() ||
+                    //pair.InteractionDefinition.GetType() == SimDebugInteractions.SaveTheData.Singleton.GetType() ||
+                    //pair.InteractionDefinition.GetType() == SimDebugInteractions.CheckTheSavedDataList.Singleton.GetType() ||
                     pair.InteractionDefinition.GetType() == SimDebugInteractions.ChooseAHobby.Singleton.GetType()
 
                     )
@@ -687,12 +699,12 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
             sim.AddInteraction(DebateEnvironment.Singleton);
             sim.AddInteraction(RantAboutInterest.Singleton);
             sim.AddInteraction(ConvinceToPursueInterest.Singleton);
-            sim.AddInteraction(SimDebugInteractions.HasBuggedInterests.Singleton);
-            sim.AddInteraction(SimDebugInteractions.ShowHobbiesUI.Singleton);
+            //sim.AddInteraction(SimDebugInteractions.HasBuggedInterests.Singleton);
+            //sim.AddInteraction(SimDebugInteractions.ShowHobbiesUI.Singleton);
             sim.AddInteraction(SimDebugInteractions.GenerateInterestBook.Singleton);
-            sim.AddInteraction(SimDebugInteractions.ExtractSaveData.Singleton);
-            sim.AddInteraction(SimDebugInteractions.SaveTheData.Singleton);
-            sim.AddInteraction(SimDebugInteractions.CheckTheSavedDataList.Singleton);
+            //sim.AddInteraction(SimDebugInteractions.ExtractSaveData.Singleton);
+            //sim.AddInteraction(SimDebugInteractions.SaveTheData.Singleton);
+            //sim.AddInteraction(SimDebugInteractions.CheckTheSavedDataList.Singleton);
             sim.AddInteraction(SimDebugInteractions.ChooseAHobby.Singleton);
 
         }

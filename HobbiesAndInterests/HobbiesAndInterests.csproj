@@ -67,8 +67,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Books\BookDataForHobbies.cs" />
+    <Compile Include="Career\CareerInstantiatorManager.cs" />
+    <Compile Include="Career\IndoorFarmerCareer.cs" />
     <Compile Include="HelperClasses\CommonHelpers.cs" />
-    <Compile Include="HelperClasses\Ferry.cs" />
     <Compile Include="HelperClasses\HobbyLot.cs" />
     <Compile Include="Interaction\GeneralInterestsInteractions.cs" />
     <Compile Include="HelperClasses\InterestSaveManager.cs" />
@@ -153,5 +154,6 @@
       <Private>False</Private>
     </Reference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
