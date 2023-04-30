@@ -1,4 +1,5 @@
 ﻿using HobbiesAndInterests.Career;
+using HobbiesAndInterests.HelperClasses;
 using Lyralei;
 using Lyralei.InterestMod;
 using Sims3.Gameplay.Abstracts;
@@ -45,8 +46,13 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
             World.sOnWorldQuitEventHandler += new EventHandler(OnWorldQuit);
             LoadSaveManager.ObjectGroupsPreLoad += new ObjectGroupsPreLoadHandler(OnPreload);
             Simulator.PostInit += CareerInstantiatorManager.PostInitCareer;
+
+            // Used for handling CC content OnBought
+            World.OnObjectPlacedInLotEventHandler += new EventHandler(CustomContentHelper.OnBuildBuy);
+
+
             //LoadSaveManager.ObjectGroupsPreLoad += new ObjectGroupsPreLoadHandler(ParseBooks);
-            //World.sOnStartupAppEventHandler += new EventHandler(OnStartupApp);
+            World.sOnStartupAppEventHandler += new EventHandler(OnStartupApp);
         }
 
         [PersistableStatic] static bool didAllmagazines = false;
@@ -67,9 +73,10 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
         }
         public static bool alreadyParsed = false;
 
-        //public static void OnStartupApp(object sender, EventArgs e)
-        //{
-        //}
+        public static void OnStartupApp(object sender, EventArgs e)
+        {
+            CustomContentHelper.LoadAllItemsFromXMLStartup();
+        }
 
         public static void OnPreload()
         {
@@ -347,10 +354,10 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
             {"Enthuse About Garlic" , "CallbackTalkingAboutEnvironment"},
             {"Enthuse About Rainbows" , "CallbackTalkingAboutEnvironment"},
             {"Talk About Flowers" , "CallbackTalkingAboutEnvironment"},
-            {"Talk About Rain" , "CallbackTalkingAboutEnvironment"},
-            {"Talk About Snow" , "CallbackTalkingAboutEnvironment"},
-            {"Talk About Hail" , "CallbackTalkingAboutEnvironment"},
-            {"Talk About Fog" , "CallbackTalkingAboutEnvironment"},
+            //{"Talk About Rain" , "CallbackTalkingAboutEnvironment"},
+            //{"Talk About Snow" , "CallbackTalkingAboutEnvironment"},
+            //{"Talk About Hail" , "CallbackTalkingAboutEnvironment"},
+            //{"Talk About Fog" , "CallbackTalkingAboutEnvironment"},
             {"Talk About Cold" , "CallbackTalkingAboutEnvironment"},
             {"Talk About Heat" , "CallbackTalkingAboutEnvironment"},
         };
@@ -759,6 +766,75 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                 }
                 gameObj.AddInteraction(AssignInterestLot.Singleton);
             }
+
+            if (gameObj.GetType() == typeof(SolarPanel))
+            {
+                SolarPanel[] solar = Sim.ActiveActor.LotHome.GetObjects<SolarPanel>();
+
+                if(solar.Length == 1)
+                {
+                    print("You've bought a solar panel! Time to choose which sim(s) should get a point into Environment");
+
+                    List<Sim> UserChosenSims = SimPicker(Sim.ActiveActor.SimDescription, 1);
+
+                    if (UserChosenSims != null && UserChosenSims.Count > 0)
+                    {
+                        foreach(Sim sim in UserChosenSims)
+                        {
+                            InterestManager.AddInterestPoints(1, sim.SimDescription, InterestTypes.Environment);
+                        }
+                    }
+                    else
+                    {
+                        print("It seems that you've canceled the dialog. If this was by accident, you can always get rid of all solar panels, and place them back again.");
+                    }
+                }
+            }
+        }
+
+        public static List<Sim> SimPicker(SimDescription sim, int amountOfAccepted)
+        {
+            List<ObjectPicker.HeaderInfo> list = new List<ObjectPicker.HeaderInfo>();
+            list.Add(new ObjectPicker.HeaderInfo("Pick any sims to add Interest point to", null, 256));
+            List<ObjectPicker.TabInfo> list2 = new List<ObjectPicker.TabInfo>();
+            list2.Add(new ObjectPicker.TabInfo(string.Empty, string.Empty, new List<ObjectPicker.RowInfo>()));
+            List<ObjectPicker.RowInfo> list3 = new List<ObjectPicker.RowInfo>();
+
+
+            foreach (Sim household in sim.Household.Sims)
+            {
+                if (household != null && household.SimDescription != null && household.SimDescription.CreatedSim != null)
+                {
+                    if (household.InWorld && !household.IsPet && !household.IsPerformingAService && household.Household.LotHome != null && sim.SimDescriptionId != household.SimDescription.SimDescriptionId)
+                    {
+                        List<ObjectPicker.ColumnInfo> list4 = new List<ObjectPicker.ColumnInfo>();
+
+                        list4.Add(new ObjectPicker.ThumbAndTextColumn(household.GetThumbnailKey(), household.FullName));
+                        ObjectPicker.RowInfo item = new ObjectPicker.RowInfo(household, list4);
+                        list2[0].RowInfo.Add(item);
+                    }
+                }
+            }
+
+
+            if (list2.Count > 0)
+            {
+                List<ObjectPicker.RowInfo> list5 = ObjectPickerDialog.Show("Sim picker", Localization.LocalizeString("Ui/Caption/ObjectPicker:OK"), Localization.LocalizeString("Ui/Caption/ObjectPicker:Cancel"), list2, list, amountOfAccepted, list3, false);
+                if (list5 != null)
+                {
+                    if (list5.Count > 0)
+                    {
+                        List<Sim> chosenSims = new List<Sim>();
+                        foreach (ObjectPicker.RowInfo item2 in list5)
+                        {
+                            Sim friendChosen = item2.Item as Sim;
+                            chosenSims.Add(friendChosen);
+                        }
+                        return chosenSims;
+                    }
+                }
+            }
+            return new List<Sim>();
         }
 
         public static void RemoveInteractionsFromObject(GameObject gameObj)

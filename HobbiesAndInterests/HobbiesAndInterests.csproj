@@ -70,6 +70,7 @@
     <Compile Include="Career\CareerInstantiatorManager.cs" />
     <Compile Include="Career\IndoorFarmerCareer.cs" />
     <Compile Include="HelperClasses\CommonHelpers.cs" />
+    <Compile Include="HelperClasses\CustomContentHelper.cs" />
     <Compile Include="HelperClasses\HobbyLot.cs" />
     <Compile Include="Interaction\GeneralInterestsInteractions.cs" />
     <Compile Include="HelperClasses\InterestSaveManager.cs" />

@@ -269,7 +269,7 @@ namespace HobbiesAndInterests.Career
 			}
 		}
 
-		public static void AssignMangakaActiveCareer(Sim createdSim, ulong guid)
+		public static void AssignHobbyActiveCareer(Sim createdSim, ulong guid)
 		{
 			try
 			{

@@ -5,6 +5,7 @@ using Sims3.Gameplay.Lyralei.InterestMod;
 using Sims3.Gameplay.Socializing;
 using Sims3.Gameplay.Utilities;
 using Sims3.SimIFace;
+using Sims3.UI;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -217,6 +218,23 @@ namespace Lyralei.InterestMod
 
             float dot = MathUtils.Clamp(Dot(from, to) / denominator, -1F, 1F);
             return ((float)Math.Acos(dot)) * 360 / ((float)Math.PI * 2);
+        }
+
+        public static void printException(Exception e)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("An exception (" + e.GetType().Name + ") occurred.");
+            sb.AppendLine("   Message:\n" + e.Message);
+            sb.AppendLine("   Stack Trace:\n   " + e.StackTrace);
+            Exception ie = e.InnerException;
+            if (ie != null)
+            {
+                sb.AppendLine("   The Inner Exception:");
+                sb.AppendLine("      Exception Name: " + ie.GetType().Name);
+                sb.AppendLine("      Message: " + ie.Message + "\n");
+                sb.AppendLine("      Stack Trace:\n   " + ie.StackTrace + "\n");
+            }
+            SimpleMessageDialog.Show("Lyralei's Interest & Hobbies [ERROR]:", sb.ToString());
         }
     }
 }

@@ -677,6 +677,44 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
             }
         }
 
+        // These are full points, rather than sub-points (aka, xp)
+        public static void AddInterestPoints(float toAdd, SimDescription description, InterestTypes interestToAdd)
+        {
+            if (mSavedSimInterests.ContainsKey(description.SimDescriptionId))
+            {
+                for (int i = 0; i < mSavedSimInterests[description.SimDescriptionId].Count; i++)
+                {
+                    if (mSavedSimInterests[description.SimDescriptionId][i].Guid == interestToAdd)
+                    {
+                        mSavedSimInterests[description.SimDescriptionId][i].modifyInterestLevel((int)toAdd, description.SimDescriptionId, mSavedSimInterests[description.SimDescriptionId][i].mInterestsGuid);
+                        
+                        // Check with player if they want sim to become vegetarian 
+                        if (mSavedSimInterests[description.SimDescriptionId][i].Guid == InterestTypes.Environment)
+                        {
+                            if(mSavedSimInterests[description.SimDescriptionId][i].currInterestPoints == 7)
+                            {
+                                if (!description.TraitManager.HasElement(TraitNames.Vegetarian))
+                                {
+                                    bool vegetarianChoice = TwoButtonDialog.Show(description.FirstName + " has been pondering about becoming a vegetarian, do you agree?", "Sure!", "No, thanks");
+
+                                    if (vegetarianChoice)
+                                    {
+                                        Trait traitFromDictionary = TraitManager.GetTraitFromDictionary(TraitNames.Vegetarian);
+                                        description.AddSocialGroupTrait(traitFromDictionary);
+                                    }
+                                }
+                            }
+
+                        }
+
+
+
+                    
+                    }
+                }
+            }
+        }
+
         public static bool CanAddSubPointsForSocial(SimDescription description, InterestTypes interestToAdd)
         {
             if (mSavedSimInterests.ContainsKey(description.SimDescriptionId))

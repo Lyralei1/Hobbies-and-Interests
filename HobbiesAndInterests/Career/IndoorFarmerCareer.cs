@@ -122,6 +122,15 @@ namespace Sims3.Gameplay.Lyralei.InterestMod.Careers
 				return true;
 			}
 
+			public override string[] GetPath(bool isFemale)
+			{
+				return new string[2]
+				{
+					"Interests & Hobbies...",
+					"Jobs..."
+				};
+			}
+
 			public override string GetInteractionName(Sim actor, CityHall target, InteractionObjectPair iop)
 			{
 				return "Join Planter Career";
@@ -133,7 +142,7 @@ namespace Sims3.Gameplay.Lyralei.InterestMod.Careers
 		public override bool InRabbitHole()
 		{
 			TryDisablingCameraFollow(Actor);
-			CareerInstantiatorManager.AssignMangakaActiveCareer(Actor, IndoorFarmerCareer.mGUID);
+			CareerInstantiatorManager.AssignHobbyActiveCareer(Actor, IndoorFarmerCareer.mGUID);
 			if (Actor.Occupation != null && Actor.Occupation is IndoorFarmerCareer)
 			{
 				return true;
