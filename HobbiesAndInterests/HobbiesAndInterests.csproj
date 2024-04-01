@@ -71,7 +71,10 @@
     <Compile Include="Career\IndoorFarmerCareer.cs" />
     <Compile Include="HelperClasses\CommonHelpers.cs" />
     <Compile Include="HelperClasses\CustomContentHelper.cs" />
+    <Compile Include="HelperClasses\EnergyManager.cs" />
     <Compile Include="HelperClasses\HobbyLot.cs" />
+    <Compile Include="HelperClasses\InterestHobbyObject.cs" />
+    <Compile Include="HelperClasses\InterestsBuffManager.cs" />
     <Compile Include="Interaction\GeneralInterestsInteractions.cs" />
     <Compile Include="HelperClasses\InterestSaveManager.cs" />
     <Compile Include="Interaction\PerInterest\EnvironmentInteractions.cs" />
@@ -114,47 +117,32 @@
     <Analyzer Include="..\..\..\..\Documents\Workfolder\Tools\Scripts\0xF7C3ADE896D4E765_UI.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="0x03D6C8D903CE868C_Sims3GameplaySystems">
-      <HintPath>..\..\..\..\Documents\Workfolder\Tools\Scripts\0x03D6C8D903CE868C_Sims3GameplaySystems.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="mscorlib">
+      <HintPath>..\..\..\..\Documents\Workfolder\Tools\S3_TemplateCreator\ReferenceAssemblies\mscorlib.dll</HintPath>
     </Reference>
-    <Reference Include="0x0CAE1C361E05B2B3_Sims3StoreObjects">
-      <HintPath>..\..\..\..\Documents\Workfolder\Tools\Scripts\0x0CAE1C361E05B2B3_Sims3StoreObjects.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="ScriptCore_Pure">
+      <HintPath>..\..\..\..\Documents\Workfolder\Tools\S3_TemplateCreator\ReferenceAssemblies\ScriptCore_Pure.dll</HintPath>
     </Reference>
-    <Reference Include="0x28EE9D383A73463E_mscorlib">
-      <HintPath>..\..\..\..\Documents\Workfolder\Tools\Scripts\0x28EE9D383A73463E_mscorlib.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="SimIFace">
+      <HintPath>..\..\..\..\Documents\Workfolder\Tools\S3_TemplateCreator\ReferenceAssemblies\SimIFace.dll</HintPath>
     </Reference>
-    <Reference Include="0x342EE04373CF1E1C_System">
-      <HintPath>..\..\..\..\Documents\Workfolder\Tools\Scripts\0x342EE04373CF1E1C_System.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="Sims3GameplayObjects">
+      <HintPath>..\..\..\..\Documents\Workfolder\Tools\S3_TemplateCreator\ReferenceAssemblies\Sims3GameplayObjects.dll</HintPath>
     </Reference>
-    <Reference Include="0x600F9EA1DDC99FB1_Sims3MetaData">
-      <HintPath>..\..\..\..\Documents\Workfolder\Tools\Scripts\0x600F9EA1DDC99FB1_Sims3MetaData.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="Sims3GameplaySystems">
+      <HintPath>..\..\..\..\Documents\Workfolder\Tools\S3_TemplateCreator\ReferenceAssemblies\Sims3GameplaySystems.dll</HintPath>
     </Reference>
-    <Reference Include="0x6AC101133051BEF1_System.Xml">
-      <HintPath>..\..\..\..\Documents\Workfolder\Tools\Scripts\0x6AC101133051BEF1_System.Xml.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="Sims3MetaData">
+      <HintPath>..\..\..\..\Documents\Workfolder\Tools\S3_TemplateCreator\ReferenceAssemblies\Sims3MetaData.dll</HintPath>
     </Reference>
-    <Reference Include="0x78CF6CF5304D0C4F_ScriptCore_Pure">
-      <HintPath>..\..\..\..\Documents\Workfolder\Tools\Scripts\0x78CF6CF5304D0C4F_ScriptCore_Pure.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="Sims3StoreObjects">
+      <HintPath>..\..\..\..\Documents\Workfolder\Tools\S3_TemplateCreator\ReferenceAssemblies\Sims3StoreObjects.dll</HintPath>
     </Reference>
-    <Reference Include="0xB9C90FDC6793BC0A_Sims3GameplayObjects">
-      <HintPath>..\..\..\..\Documents\Workfolder\Tools\Scripts\0xB9C90FDC6793BC0A_Sims3GameplayObjects.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="0xC356DF69B70ADD42_SimIFace">
-      <HintPath>..\..\..\..\Documents\Workfolder\Tools\Scripts\0xC356DF69B70ADD42_SimIFace.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="0xF7C3ADE896D4E765_UI">
-      <HintPath>..\..\..\..\Documents\Workfolder\Tools\Scripts\0xF7C3ADE896D4E765_UI.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="System" />
+    <Reference Include="System.Xml" />
+    <Reference Include="UI">
+      <HintPath>..\..\..\..\Documents\Workfolder\Tools\S3_TemplateCreator\ReferenceAssemblies\UI.dll</HintPath>
     </Reference>
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

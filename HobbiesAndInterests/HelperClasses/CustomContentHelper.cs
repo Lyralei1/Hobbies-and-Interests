@@ -9,8 +9,6 @@ using Sims3.SimIFace;
 using Sims3.UI;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
-using static Sims3.SimIFace.World;
 
 namespace HobbiesAndInterests.HelperClasses
 {
@@ -23,7 +21,6 @@ namespace HobbiesAndInterests.HelperClasses
             XmlDbData xmlSupportedMods = XmlDbData.ReadData(new ResourceKey(0xFB8395AB64929453, 0x0333406C, 0x00000000), false);
             if (xmlSupportedMods != null)
             {
-                InterestManager.print("Loading items...");
                 if (!ReadContentData(xmlSupportedMods))
                 {
                     InterestManager.print("An error occured while loading compatible CC. Error file has been made in Documents/The Sims 3. Make sure to give this to Lyralei. Interest & Hobbies mod will work fine though!");
@@ -41,12 +38,10 @@ namespace HobbiesAndInterests.HelperClasses
 
                 if (xmlDocument != null && xmlDocument.Tables != null && xmlDocument.Tables.TryGetValue("ModOnBought", out xmlDbTable))
                 {
-                    InterestManager.print("Scanning...");
 
                     foreach (XmlDbRow row in xmlDbTable.Rows)
                     {
                         CustomContentItem mCustomContent = null;
-                        InterestManager.print("Started on item...");
 
                         InterestTypes key;
                         if (!row.TryGetEnum("InterestType", out key, InterestTypes.None))
@@ -64,7 +59,6 @@ namespace HobbiesAndInterests.HelperClasses
 
                         //if(!mItems.Contains(mCustomContent)) 
                         mItems.Add(mCustomContent);
-                        InterestManager.print("Finished on item...");
 
                     }
                 }
@@ -127,7 +121,6 @@ namespace HobbiesAndInterests.HelperClasses
 
                 if (continueOn)
                 {
-
                     List<Sim> UserChosenSims = GlobalOptionsHobbiesAndInterests.SimPicker(Sim.ActiveActor.SimDescription, 1);
 
                     if (UserChosenSims != null && UserChosenSims.Count > 0)

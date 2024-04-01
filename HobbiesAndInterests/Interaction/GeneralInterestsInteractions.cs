@@ -1,4 +1,5 @@
-﻿using Lyralei;
+﻿using HobbiesAndInterests.HelperClasses;
+using Lyralei;
 using Lyralei.UI;
 using Sims3.Gameplay;
 using Sims3.Gameplay.Abstracts;
@@ -297,9 +298,9 @@ namespace Lyralei.InterestMod
 
             public override string[] GetPath(bool isFemale)
             {
-                return new string[1]
+                return new string[2]
                 {
-                    "Interests & Hobbies..."
+                    "Interests & Hobbies...", "Research..."
                 };
             }
 
@@ -594,6 +595,370 @@ namespace Lyralei.InterestMod
             }
             return num;
         }
+    }
+
+    public class CheckEnergyCompany : Interaction<Sim, PhoneSmart>
+    {
+        public class Definition : InteractionDefinition<Sim, PhoneSmart, CheckEnergyCompany>
+        {
+
+            public override string[] GetPath(bool isFemale)
+            {
+                return new string[2]
+                {
+                    "Interests & Hobbies...", "Services..."
+                };
+            }
+
+            public override string GetInteractionName(Sim actor, PhoneSmart target, InteractionObjectPair iop)
+            {
+                return "Check & Switch Energy Companies";
+            }
+
+            public override bool Test(Sim a, PhoneSmart target, bool isAutonomous, ref GreyedOutTooltipCallback greyedOutTooltipCallback)
+            {
+                if (!target.IsUsableBy(a))
+                {
+                    return false;
+                }
+                if (a.Inventory.Find<IPhoneSmart>() == null)
+                {
+                    return false;
+                }
+                if (!target.IsUsableBy(a) || a.Inventory.Find<PhoneSmart>() == null)
+                {
+                    return false;
+                }
+
+                EnergyManager.EnergyCompany company = EnergyManager.GetSimEnergyCompanyIsWith(a);
+                if (company == null || company.isExpiredContract)
+                    return true;
+                else if (!company.isExpiredContract)
+                {
+                    greyedOutTooltipCallback = CreateTooltipCallback("Your household already has a contract! Contract will expire in: " + company.RemainingDays.ToString() + " days");
+                    return false;
+                }
+                return true;
+            }
+        }
+
+        public override ThumbnailKey GetIconKey()
+        {
+            ThumbnailKey kInvalidThumbnailKey = ThumbnailKey.kInvalidThumbnailKey;
+            string name = "w_smart_phone_browse_web";
+            ProductVersion version = (ProductVersion)131072u;
+            IPhoneFuture phoneFuture = base.Actor.Inventory.Find<IPhoneFuture>();
+            if (GameUtils.IsInstalled((ProductVersion)1048576u) && phoneFuture != null)
+            {
+                name = "w_future_phone_browse_web";
+                version = (ProductVersion)1048576u;
+            }
+            return new ThumbnailKey(ResourceKey.CreatePNGKey(name, ResourceUtils.ProductVersionToGroupId(version)), ThumbnailSize.Large);
+        }
+
+        public static InteractionDefinition Singleton = new Definition();
+
+        public override bool RunFromInventory()
+        {
+            return Run();
+        }
+
+        [TunableComment("Chance to drop the smart phone")]
+        [Tunable]
+        public static float kChanceToDrop = 0.1f;
+
+        public Jig mJig;
+
+        public override bool Run()
+        {
+            IGameObject gameObject = null;
+            base.StandardEntry();
+            SocialNetworkingSkill socialNetworkingSkill = base.Actor.SkillManager.GetElement(SkillNames.SocialNetworking) as SocialNetworkingSkill;
+
+            mJig = (GlobalFunctions.CreateObject("SocialJigOnePerson", Vector3.OutOfWorld, 0, Vector3.OutOfWorld) as SocialJigOnePerson);
+            mJig.SetOpacity(0f, 0f);
+            Vector3 position = base.Actor.Position;
+            Vector3 forwardVector = base.Actor.ForwardVector;
+            mJig.SetPosition(position);
+            mJig.SetForward(forwardVector);
+            mJig.AddToWorld();
+
+            base.Target.StartUsingSmartPhone(base.Actor, ref gameObject, this);
+            base.BeginCommodityUpdates();
+
+            if (base.Actor.TraitManager.HasElement(TraitNames.NightOwlTrait) && base.Actor.BuffManager.HasElement(BuffNames.PastBedTime))
+            {
+                base.AlterMotiveMultiplier(CommodityKind.Fun, TraitTuning.NightOwlFunModifier);
+            }
+            base.AnimateSim("BrowseTheWeb");
+
+            base.Actor.SkillManager.AddElement(SkillNames.SocialNetworking);
+            if (base.Actor.IsSelectable)
+            {
+                Tutorialette.TriggerLesson(Lessons.SocialNetworking, base.Actor);
+            }
+            base.BeginCommodityUpdates();
+
+            EnergyManager.EnergyCompany company = EnergyCompanySelectionDialog.Show();
+            EnergyManager.RegisterSimWithEnergyCompany(base.Actor, company);
+
+            base.EndCommodityUpdates(true);
+
+            if (RandomUtil.RandomChance01(kChanceToDrop))
+            {
+                base.AnimateSim("PhoneDropped");
+                base.Target.IsBroken = true;
+            }
+            else
+            {
+                base.AnimateSim("NormalExit");
+            }
+            //base.Actor.BuffManager.AddElement(BuffNames.PhoneJunkie, Origin.FromUsingSmartPhone);
+            base.Target.RemoveHandObject();
+            if (mJig != null)
+            {
+                mJig.Destroy();
+                mJig = null;
+            }
+
+            float getPrice = 300 * company.NewPeakTarif;
+
+            base.Actor.ShowTNSIfSelectable("I'm now with " + company.NameCompany + ", the contract will expire in " + company.RemainingDays.ToString() + " days, and the total cost each monday is supposedly: " + getPrice.ToString() + ". If I want to keep track of my cost, I can always check in the app!", StyledNotification.NotificationStyle.kSimTalking);
+
+            base.StandardExit();
+            return true;
+        }
+
+        public override void Cleanup()
+        {
+            if (mJig != null)
+            {
+                mJig.Destroy();
+                mJig = null;
+            }
+            base.Cleanup();
+        }
+    }
+
+    public class CheckEnergyInfo : Interaction<Sim, PhoneSmart>
+    {
+        public class Definition : InteractionDefinition<Sim, PhoneSmart, CheckEnergyInfo>
+        {
+
+            public override string[] GetPath(bool isFemale)
+            {
+                return new string[2]
+                {
+                    "Interests & Hobbies...", "Services..."
+                };
+            }
+
+            public override string GetInteractionName(Sim actor, PhoneSmart target, InteractionObjectPair iop)
+            {
+                return "Check Energy Information";
+            }
+
+            public override bool Test(Sim a, PhoneSmart target, bool isAutonomous, ref GreyedOutTooltipCallback greyedOutTooltipCallback)
+            {
+                if (!target.IsUsableBy(a))
+                {
+                    return false;
+                }
+                if (a.Inventory.Find<IPhoneSmart>() == null)
+                {
+                    return false;
+                }
+                if (!target.IsUsableBy(a) || a.Inventory.Find<PhoneSmart>() == null)
+                {
+                    return false;
+                }
+
+                EnergyManager.EnergyCompany company = EnergyManager.GetSimEnergyCompanyIsWith(a);
+                if (company == null || company.isExpiredContract)
+                    return false;
+
+                return true;
+            }
+        }
+
+        public override ThumbnailKey GetIconKey()
+        {
+            ThumbnailKey kInvalidThumbnailKey = ThumbnailKey.kInvalidThumbnailKey;
+            string name = "w_smart_phone_browse_web";
+            ProductVersion version = (ProductVersion)131072u;
+            IPhoneFuture phoneFuture = base.Actor.Inventory.Find<IPhoneFuture>();
+            if (GameUtils.IsInstalled((ProductVersion)1048576u) && phoneFuture != null)
+            {
+                name = "w_future_phone_browse_web";
+                version = (ProductVersion)1048576u;
+            }
+            return new ThumbnailKey(ResourceKey.CreatePNGKey(name, ResourceUtils.ProductVersionToGroupId(version)), ThumbnailSize.Large);
+        }
+
+        public static InteractionDefinition Singleton = new Definition();
+
+        public override bool RunFromInventory()
+        {
+            return Run();
+        }
+
+        [TunableComment("Chance to drop the smart phone")]
+        [Tunable]
+        public static float kChanceToDrop = 0.1f;
+
+        public Jig mJig;
+
+        public override bool Run()
+        {
+            IGameObject gameObject = null;
+            base.StandardEntry();
+            SocialNetworkingSkill socialNetworkingSkill = base.Actor.SkillManager.GetElement(SkillNames.SocialNetworking) as SocialNetworkingSkill;
+
+            mJig = (GlobalFunctions.CreateObject("SocialJigOnePerson", Vector3.OutOfWorld, 0, Vector3.OutOfWorld) as SocialJigOnePerson);
+            mJig.SetOpacity(0f, 0f);
+            Vector3 position = base.Actor.Position;
+            Vector3 forwardVector = base.Actor.ForwardVector;
+            mJig.SetPosition(position);
+            mJig.SetForward(forwardVector);
+            mJig.AddToWorld();
+
+            base.Target.StartUsingSmartPhone(base.Actor, ref gameObject, this);
+            base.BeginCommodityUpdates();
+
+            if (base.Actor.TraitManager.HasElement(TraitNames.NightOwlTrait) && base.Actor.BuffManager.HasElement(BuffNames.PastBedTime))
+            {
+                base.AlterMotiveMultiplier(CommodityKind.Fun, TraitTuning.NightOwlFunModifier);
+            }
+            base.AnimateSim("BrowseTheWeb");
+
+            base.Actor.SkillManager.AddElement(SkillNames.SocialNetworking);
+            if (base.Actor.IsSelectable)
+            {
+                Tutorialette.TriggerLesson(Lessons.SocialNetworking, base.Actor);
+            }
+            base.BeginCommodityUpdates();
+
+            EnergyManager.EnergyCompany company = EnergyManager.GetSimEnergyCompanyIsWith(base.Actor);
+
+            StringBuilder sb = new StringBuilder();
+
+            sb.AppendLine(company.NameCompany);
+            sb.AppendLine("Contract Type: " + (company.IsFixedContract ? "Fixed contract" : "Variable contract"));
+            sb.AppendLine("Has Discount when you produce your own energy: " +  company.DiscountsWhenRenewableEnergy.ToString());
+            sb.AppendLine("");
+            sb.AppendLine("Off Peak tarif: " + company.NewOffPeakTarif.ToString() + "  (Normally: " + company.OffPeakTarif.ToString() + ")");
+            sb.AppendLine("Peak tarif: " + company.NewPeakTarif.ToString() + "  (Normally: " + company.PeakTarif.ToString() + ")");
+            sb.AppendLine("Currently Made Cost: " + company.EnergyCurrentPrice.ToString());
+            sb.AppendLine("Current made kWh: " + company.kWhCurrentlyProduced.ToString() + " kWh");
+            sb.AppendLine("Days before contract expires: " + company.RemainingDays.ToString() + " days");
+
+            base.Actor.ShowTNSIfSelectable(sb.ToString(), StyledNotification.NotificationStyle.kSimTalking);
+
+            base.EndCommodityUpdates(true);
+
+            if (RandomUtil.RandomChance01(kChanceToDrop))
+            {
+                base.AnimateSim("PhoneDropped");
+                base.Target.IsBroken = true;
+            }
+            else
+            {
+                base.AnimateSim("NormalExit");
+            }
+            //base.Actor.BuffManager.AddElement(BuffNames.PhoneJunkie, Origin.FromUsingSmartPhone);
+            base.Target.RemoveHandObject();
+            if (mJig != null)
+            {
+                mJig.Destroy();
+                mJig = null;
+            }
+
+            base.StandardExit();
+            return true;
+        }
+
+        public override void Cleanup()
+        {
+            if (mJig != null)
+            {
+                mJig.Destroy();
+                mJig = null;
+            }
+            base.Cleanup();
+        }
+    }
+
+    public class CheckEnergyInfoComputer : Computer.ComputerInteraction
+    {
+        public class Definition : InteractionDefinition<Sim, Computer, CheckEnergyInfoComputer>
+        {
+
+            public override string[] GetPath(bool isFemale)
+            {
+                return new string[2]
+                {
+                    "Interests & Hobbies...",
+                    "Research..."
+                };
+            }
+
+
+            public override string GetInteractionName(Sim actor, Computer target, InteractionObjectPair iop)
+            {
+                return "Check Energy Information";
+            }
+
+            public override bool Test(Sim a, Computer target, bool isAutonomous, ref GreyedOutTooltipCallback greyedOutTooltipCallback)
+            {
+                if (target.InUse || target.IsActorUsingMe(a))
+                    return false;
+
+                EnergyManager.EnergyCompany company = EnergyManager.GetSimEnergyCompanyIsWith(a);
+                if (company == null || company.isExpiredContract)
+                    return false;
+
+                return true;
+            }
+        }
+
+        public static readonly InteractionDefinition Singleton = new Definition();
+
+        public override bool Run()
+        {
+
+            StandardEntry();
+            if (!Target.StartComputing(this, SurfaceHeight.Table, true))
+            {
+                StandardExit();
+                return false;
+            }
+            Target.StartVideo(Computer.VideoType.Browse);
+            BeginCommodityUpdates();
+
+            EnergyManager.EnergyCompany company = EnergyManager.GetSimEnergyCompanyIsWith(base.Actor);
+
+            StringBuilder sb = new StringBuilder();
+
+            sb.AppendLine(company.NameCompany);
+            sb.AppendLine("Contract Type: " + (company.IsFixedContract ? "Fixed contract" : "Variable contract"));
+            sb.AppendLine("Has Discount when you produce your own energy: " + company.DiscountsWhenRenewableEnergy.ToString());
+            sb.AppendLine("");
+            sb.AppendLine("Off Peak tarif: " + company.NewOffPeakTarif.ToString() + "  (Normally: " + company.OffPeakTarif.ToString() + ")");
+            sb.AppendLine("Peak tarif: " + company.NewPeakTarif.ToString() + "  (Normally: " + company.PeakTarif.ToString() + ")");
+            sb.AppendLine("Currently Made Cost: " + company.EnergyCurrentPrice.ToString());
+            sb.AppendLine("Current made kWh: " + company.kWhCurrentlyProduced.ToString() + " kWh");
+            sb.AppendLine("Days before contract expires: " + company.RemainingDays.ToString() + " days");
+
+            base.Actor.ShowTNSIfSelectable(sb.ToString(), StyledNotification.NotificationStyle.kSimTalking);
+
+            AnimateSim("GenericTyping");
+            bool flag = DoLoop(ExitReason.Default);
+            EndCommodityUpdates(flag);
+            Target.StopComputing(this, Computer.StopComputingAction.TurnOff, false);
+            StandardExit();
+            return flag;
+        }
+
     }
 
     public class SubscribeToInterestMagazine : Computer.ComputerInteraction
@@ -1134,8 +1499,85 @@ namespace Lyralei.InterestMod
         }
     }
 
-    
+    public class ShowHobbies : ImmediateInteraction<Sim, Sim>
+    {
+        public sealed class Definition : ImmediateInteractionDefinition<Sim, Sim, ShowHobbies>
+        {
+            public Interest CurrInterestType;
+            public Definition()
+            {
+            }
 
+            public Definition(Interest currentInterest)
+            {
+                CurrInterestType = currentInterest;
+            }
+
+            public override string[] GetPath(bool isFemale)
+            {
+                return new string[2]
+                {
+                    "Interests & Hobbies...",
+                    CurrInterestType.Guid.ToString()
+                };
+            }
+            public override string GetInteractionName(Sim a, Sim target, InteractionObjectPair interaction)
+            {
+                return "Check Hobbies...";
+            }
+            public override bool Test(Sim a, Sim target, bool isAutonomous, ref GreyedOutTooltipCallback greyedOutTooltipCallback)
+            {
+                if (InterestManager.mSavedSimInterests.ContainsKey(target.SimDescription.SimDescriptionId) && a.IsSelectable)
+                {
+                    return true;
+                }
+                return false;
+            }
+
+            public override void AddInteractions(InteractionObjectPair iop, Sim actor, Sim target, List<InteractionObjectPair> results)
+            {
+                List<Interest> interests = InterestManager.mSavedSimInterests[actor.mSimDescription.SimDescriptionId];
+
+                for (int i = 0; i < interests.Count; i++)
+                {
+                    if (interests[i] != null && !target.IsActorUsingMe(actor))
+                    {
+                        // Loop through all interests that are at 10, so sims can start reseaching them to start with.
+                        results.Add(new InteractionObjectPair(new Definition(interests[i]), iop.Target));
+                    }
+                }
+            }
+        }
+
+        public static readonly InteractionDefinition Singleton = new Definition();
+
+        public override bool Run()
+        {
+            Definition definition = base.InteractionDefinition as Definition;
+
+            if (definition.CurrInterestType == null)
+                return false;
+
+            Interest interest = InterestManager.GetInterestFromInterestType(definition.CurrInterestType.Guid, base.Target);
+
+            List<ObjectListPickerInfo> breedInfo = new List<ObjectListPickerInfo>();
+
+            foreach (Interest.Hobby hobby in definition.CurrInterestType.hobbies)
+            {
+                ObjectListPickerInfo o = new ObjectListPickerInfo(hobby.mName, hobby);
+                breedInfo.Add(o);
+            }
+            Interest.Hobby chosenItem = ObjectListPickerDialog.Show(breedInfo) as Interest.Hobby;
+
+            SimpleMessageDialog.Show("Interests & hobbies: ", chosenItem.ToString());
+
+            foreach (Interest.HobbyChallenge challenge in chosenItem.mHobbyChallenges)
+            {
+                SimpleMessageDialog.Show("Interests & hobbies: ", "challenge: " + '\n' + challenge.ToString());
+            }
+            return true;
+        }
+    }
 
     public class DebateEnvironment : SocialInteractionA
     {

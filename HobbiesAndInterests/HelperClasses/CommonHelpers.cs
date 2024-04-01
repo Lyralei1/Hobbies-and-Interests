@@ -1,7 +1,14 @@
-﻿using Sims3.Gameplay.Autonomy;
+﻿using Sims3.Gameplay.Abstracts;
+using Sims3.Gameplay.Autonomy;
+using Sims3.Gameplay.Core;
 using Sims3.Gameplay.Interactions;
 using Sims3.Gameplay.Interfaces;
 using Sims3.Gameplay.Lyralei.InterestMod;
+using Sims3.Gameplay.Objects.Appliances;
+using Sims3.Gameplay.Objects.Electronics;
+using Sims3.Gameplay.Objects.Lighting;
+using Sims3.Gameplay.Objects.PerformanceObjects;
+using Sims3.Gameplay.Objects.Register;
 using Sims3.Gameplay.Socializing;
 using Sims3.Gameplay.Utilities;
 using Sims3.SimIFace;
@@ -15,6 +22,84 @@ namespace Lyralei.InterestMod
 {
     public static class CommonHelpers
     {
+
+        public static List<GameObject> GetAllElectronicObjectsOnLot(Lot lot)
+        {
+            GameObject[] mGameObjects = lot.GetObjects<GameObject>();
+            List<GameObject> mElectronics = new List<GameObject>();
+
+            string[] validNamespaces = new string[]
+            {
+                    "Sims3.Gameplay.Objects.Entertainment",
+                    "Sims3.Gameplay.Objects.Electronics",
+                    "Sims3.Gameplay.Objects.Appliances",
+                    "Sims3.Gameplay.Objects.Lighting",
+                    "Sims3.Gameplay.Objects.PerformanceObjects"
+            };
+
+            foreach (GameObject obj in mGameObjects)
+            {
+                if (obj.GetType() == typeof(PhoneHome) ||
+                    obj.GetType() == typeof(DaylightLight) ||
+                    obj.GetType() == typeof(MoodLamp) ||
+                    obj.GetType() == typeof(LightInvisible) ||
+                    obj.GetType() == typeof(Grill) ||
+                    obj.GetType() == typeof(Clothesline) ||
+                    obj.GetType() == typeof(FutureBar) ||
+                    obj.GetType() == typeof(FutureFoodSynthesizer) ||
+                    obj.GetType() == typeof(AlarmClockCheap) ||
+                    obj.GetType() == typeof(VideoCamera) ||
+                    obj.GetType() == typeof(VRGoggles) ||
+                    obj.GetType() == typeof(CrowdMonster) ||
+                    obj.GetType() == typeof(PerformanceTips) ||
+                    obj.GetType() == typeof(ProprietorWaitingArea) ||
+                    obj.GetType() == typeof(ShowFloor) ||
+                    obj.GetType() == typeof(ShowStage)
+                    )
+                {
+                    continue;
+                }
+
+                string mNamespace = obj.GetType().Namespace;
+
+                if ((mNamespace == validNamespaces[0]) ||
+                    (mNamespace == validNamespaces[1]) ||
+                    (mNamespace == validNamespaces[2]) ||
+                    (mNamespace == validNamespaces[3]) ||
+                    (mNamespace == validNamespaces[4]) ||
+                    obj.GetType() == typeof(ShoppingRegister) ||
+                    obj.GetType() == typeof(AthleticGameObject)
+                    )
+                {
+                    mElectronics.Add(obj);
+                }
+            }
+            return mElectronics;
+
+        }
+
+        public static MethodInfo FindMethod(string methodName)
+        {
+            if (methodName.Contains(","))
+            {
+                string[] array = methodName.Split(',');
+                string typeName = array[0] + "," + array[1];
+                Type type = Type.GetType(typeName, true);
+                string text = array[2];
+                text = text.Replace(" ", "");
+
+                if (type.GetMethod(text) == null)
+                {
+                    return null;
+                }
+
+                return type.GetMethod(text);
+            }
+            return null;
+            //Type typeFromHandle = typeof(RandomizerFunctions);
+            //return typeFromHandle.GetMethod(methodName);
+        }
+
         public static Dictionary<Key, Value> MergeInPlace<Key, Value>(Dictionary<Key, Value> left, Dictionary<Key, Value> right)
         {
             if (left == null)

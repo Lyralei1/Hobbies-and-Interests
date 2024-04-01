@@ -135,6 +135,7 @@ namespace Lyralei
             }
         }
 
+
         //public class CheckInterestDetails : ImmediateInteraction<Sim, Sim>
         //{
         //    public static readonly InteractionDefinition Singleton = new Definition();
@@ -416,7 +417,7 @@ namespace Lyralei
         //    }
         //}
 
-        public class ChooseAHobby : ImmediateInteraction<Sim, Sim>
+        public class ChooseAHobbyDEBUG : ImmediateInteraction<Sim, Sim>
         {
             public static readonly InteractionDefinition Singleton = new Definition();
 
@@ -450,11 +451,11 @@ namespace Lyralei
             }
 
             [DoesntRequireTuning]
-            public sealed class Definition : ImmediateInteractionDefinition<Sim, Sim, ChooseAHobby>
+            public sealed class Definition : ImmediateInteractionDefinition<Sim, Sim, ChooseAHobbyDEBUG>
             {
                 public override string GetInteractionName(Sim a, Sim target, InteractionObjectPair interaction)
                 {
-                    return "Check a Hobby (environment)";
+                    return "[DEBUG] Check a Hobby...";
                 }
                 public override bool Test(Sim a, Sim target, bool isAutonomous, ref GreyedOutTooltipCallback greyedOutTooltipCallback)
                 {

@@ -2,9 +2,11 @@
 using Sims3.Gameplay.Abstracts;
 using Sims3.Gameplay.Actors;
 using Sims3.Gameplay.ActorSystems;
+using Sims3.Gameplay.Autonomy;
 using Sims3.Gameplay.CAS;
 using Sims3.Gameplay.Core;
 using Sims3.Gameplay.Interactions;
+using Sims3.Gameplay.Interfaces;
 using Sims3.Gameplay.Lyralei.InterestMod;
 using Sims3.Gameplay.Lyralei.InterestsAndHobbies;
 using Sims3.Gameplay.Objects.Appliances;
@@ -21,12 +23,18 @@ using Sims3.Gameplay.Situations;
 using Sims3.Gameplay.Skills;
 using Sims3.Gameplay.Utilities;
 using Sims3.SimIFace;
+using Sims3.SimIFace.CAS;
 using Sims3.Store.Objects;
 using Sims3.UI;
+using Sims3.UI.Hud;
 using System;
 using System.Collections.Generic;
+using System.Text;
+using static Sims3.Gameplay.StoreSystems.SetObjectHelper;
+using static Sims3.Gameplay.StoryProgression.Demographics.Demographic;
 using Camera = Sims3.Gameplay.Core.Camera;
 using Food = Sims3.Gameplay.Lyralei.InterestMod.Food;
+using Interest = Sims3.Gameplay.Lyralei.InterestMod.Interest;
 
 namespace Lyralei.InterestMod
 {
@@ -74,9 +82,9 @@ namespace Lyralei.InterestMod
         // Turn into a switch statement.
         public static void DoSkillCheckOnPointsGained(SimDescription desc, Interest interest)
         {
-            if(interest.mInterestsGuid == InterestTypes.Environment)
+            if (interest.mInterestsGuid == InterestTypes.Environment)
             {
-                if(desc.SkillManager.HasElement(SkillNames.Gardening) && desc.SkillManager.GetSkillLevel(SkillNames.Gardening) > 1)
+                if (desc.SkillManager.HasElement(SkillNames.Gardening) && desc.SkillManager.GetSkillLevel(SkillNames.Gardening) > 1)
                 {
                     interest.modifyInterestLevel(RandomUtil.GetInt(Tunables.MinMaxForTowniesInterestPassionate[0], Tunables.MinMaxForTowniesInterestPassionate[1]), desc.mSimDescriptionId, interest.mInterestsGuid);
                 }
@@ -179,11 +187,11 @@ namespace Lyralei.InterestMod
         public static void SetTownieAlarms(Sim sim)
         {
             // if the user has decided that townies can't have a life after work, then exit out.
-            if(!Tunables.kMayTowniesPerformHobbiesAutonomously) { return; }
+            if (!Tunables.kMayTowniesPerformHobbiesAutonomously) { return; }
 
             if (sim != null && sim.SimDescription != null && InterestManager.mSavedSimInterests.ContainsKey(sim.SimDescription.SimDescriptionId))
             {
-                float TimeUntilEvent = RandomUtil.GetFloat(1f, 24f);
+                float TimeUntilEvent = RandomUtil.GetFloat(1f, 24f);// was 24
                 float RandomDay = RandomUtil.GetFloat(1f, 7f);
 
                 mDoHobbyAutonomouslyAlarm = sim.AddAlarmRepeating(TimeUntilEvent, TimeUnit.Hours, () => { PreformHobby(sim, true, false); }, TimeUntilEvent, TimeUnit.Hours, "Do_Hobby_Autonomously_Alarm_" + sim.SimDescription.SimDescriptionId.ToString(), AlarmType.AlwaysPersisted);
@@ -199,17 +207,17 @@ namespace Lyralei.InterestMod
             sim.IsInGroupOrDateSituation(out isOnDate);
             sim.IsInGroupOrPackSituation(out isInPack);
 
-            if (sim.IsSleeping || isOnDate || sim.MoodManager.IsInNegativeMood || sim.IsAtWork || sim.IsDying() || isInPack || sim.IsSimInSituationWhichRulesOutMetaAutonomy || sim.IsSocializing || PromSituation.IsGoingToProm(sim) || sim.IsPerformingAService || sim.WasCreatedByAService || sim.Household.IsServiceNpcHousehold || sim.Household.IsSpecialHousehold || sim.Household.IsAlienHousehold || sim.Household.IsMermaidHousehold || sim.Household.IsPetHousehold || sim.Household.IsPreviousTravelerHousehold || sim.Household.IsServobotHousehold || sim.Household.IsSpecialHousehold || sim.Household.IsTouristHousehold || sim.Household.IsTravelHousehold)
+            if (sim.IsSleeping || isOnDate || sim.MoodManager.IsInNegativeMood || sim.IsAtWork  || sim.IsDying() || isInPack || sim.IsSimInSituationWhichRulesOutMetaAutonomy || sim.IsSocializing || PromSituation.IsGoingToProm(sim) || sim.IsPerformingAService || sim.WasCreatedByAService || sim.Household.IsServiceNpcHousehold || sim.Household.IsSpecialHousehold || sim.Household.IsAlienHousehold || sim.Household.IsMermaidHousehold || sim.Household.IsPetHousehold || sim.Household.IsPreviousTravelerHousehold || sim.Household.IsServobotHousehold || sim.Household.IsSpecialHousehold || sim.Household.IsTouristHousehold || sim.Household.IsTravelHousehold)
             {
                 return;
             }
 
-            if(isAlreadyOnHobbyLot)
+            if (isAlreadyOnHobbyLot)
             {
                 Lot hobbyLot = sim.LotCurrent;
                 HobbyLot hobbylotType = null;
 
-                if(InterestManager.mHobbyLot != null || InterestManager.mHobbyLot.Count > 0)
+                if (InterestManager.mHobbyLot != null || InterestManager.mHobbyLot.Count > 0)
                 {
                     foreach (HobbyLot hobby in InterestManager.mHobbyLot)
                     {
@@ -219,7 +227,7 @@ namespace Lyralei.InterestMod
                         }
                     }
                 }
-                if(hobbylotType != null)
+                if (hobbylotType != null)
                 {
                     Interest interest = InterestManager.GetInterestFromInterestType(hobbylotType.typeHobbyLot, sim);
                     DoHobbyAutonomously(interest, sim, false, true);
@@ -232,9 +240,10 @@ namespace Lyralei.InterestMod
             List<Interest> interests = InterestManager.mSavedSimInterests[sim.SimDescription.SimDescriptionId];
             List<Interest> mCompatibleInterests = new List<Interest>();
 
-            for(int i = 0; i < interests.Count; i++)
+            for (int i = 0; i < interests.Count; i++)
             {
-                if(InterestManager.HasTheNecessaryInterest(sim.SimDescription, interests[i].mInterestsGuid, false))
+                //if (InterestManager.HasTheNecessaryInterest(sim.SimDescription, interests[i].mInterestsGuid, false))
+                if (interests[i].mInterestsGuid == InterestTypes.Environment)
                 {
                     mCompatibleInterests.Add(interests[i]);
                 }
@@ -244,15 +253,16 @@ namespace Lyralei.InterestMod
             {
                 Interest randomInterest = RandomUtil.GetRandomObjectFromList(mCompatibleInterests);
 
+
                 // If we want our sims to preform stuff in the world rather than visiting any saved hobby lots
-                if(isForRandomHobbyInteraction)
+                if (isForRandomHobbyInteraction)
                 {
                     // Don't use user-defined hobby lot
                     DoHobbyAutonomously(randomInterest, sim, false, false);
                 }
                 else
                 {
-                    if(randomInterest.mInterestsGuid == InterestTypes.Environment)
+                    if (randomInterest.mInterestsGuid == InterestTypes.Environment)
                     {
                         // Use user-defined hobby lot.
                         DoHobbyAutonomously(randomInterest, sim, true, false);
@@ -292,7 +302,7 @@ namespace Lyralei.InterestMod
 
                     if (sim.SkillManager.HasElement(SkillNames.Gardening) && sim.SkillManager.GetSkillLevel(SkillNames.Gardening) > 1) simInterests.Add("Gardening");
                     if (sim.SkillManager.HasElement(SkillNames.Fishing) && sim.SkillManager.GetSkillLevel(SkillNames.Fishing) > 1) simInterests.Add("Fishing");
-                    if (sim.SkillManager.HasElement(SkillNames.Handiness) && sim.SkillManager.GetSkillLevel(SkillNames.Handiness) > 1) simInterests.Add("Handiness");
+                    if (sim.SkillManager.HasElement(SkillNames.Handiness) && sim.SkillManager.GetSkillLevel(SkillNames.Handiness) > 3) simInterests.Add("Handiness");
 
                     if (simInterests.Count > 0)
                     {
@@ -301,235 +311,59 @@ namespace Lyralei.InterestMod
 
                     if (skillPicked == "Gardening")
                     {
-                        // If we need to apply the interaction to go to the hobby lot...
-                        if (shouldUseSavedLot)
-                        {
-                            Lot getHobbyLot = GetHobbyLotAslot(interest.mInterestsGuid, skillPicked);
-
-                            Plant[] savedLotPlants = getHobbyLot.GetObjects<Plant>();
-
-                            if (savedLotPlants.Length == 0)
-                            {
-                                Camera.FocusOnLot(getHobbyLot.LotId, 0f);
-                                bool acceptedBuyMode = TwoButtonDialog.Show("It seems that you've applied this lot to be a 'gardening' hobby lot for your townies to gather, but there aren't any plants! Make sure that you add plants to this lot: " + getHobbyLot.Name + " - " + getHobbyLot.Address + '\n' + '\n' + "Do you want to fix it now by going into buy mode on that lot? (BuyDeBug on, the cheat, will be turned on for this)", "Yes", "No");
-
-                                if (acceptedBuyMode && getHobbyLot.LotId != 0)
-                                {
-                                    Commands.EnableTestingCheats();
-                                    BuyController.BuyDebug(true);
-                                    GameStates.TransitionToBuyMode(getHobbyLot, new EventArgs());
-                                    Commands.UpdateRoomMarkerVisibility();
-                                }
-                                return;
-                            }
-
-                            int @int = RandomUtil.GetInt(0, savedLotPlants.Length - 1);
-                            DoHobbyInteraction(sim, savedLotPlants[@int], GetHobbyLotAsHobbyLot(getHobbyLot.LotId).GetRandomInteractionFromWhitelist(InteractionTypesHobbies.Gardening), true);
-                        }
-
-                        if(isAlreadyOnHobbyLot)
-                        {
-                            Lot getHobbyLot = sim.LotCurrent;
-
-                            Plant[] savedLotPlants = getHobbyLot.GetObjects<Plant>();
-
-                            if (savedLotPlants.Length == 0)
-                            {
-                                Camera.FocusOnLot(getHobbyLot.LotId, 0f);
-                                bool acceptedBuyMode = TwoButtonDialog.Show("It seems that you've applied this lot to be a 'gardening' hobby lot for your townies to gather, but there aren't any plants! Make sure that you add plants to this lot: " + getHobbyLot.Name + " - " + getHobbyLot.Address + '\n' + '\n' + "Do you want to fix it now by going into buy mode on that lot? (BuyDeBug on, the cheat, will be turned on for this)", "Yes", "No");
-
-                                if (acceptedBuyMode && getHobbyLot.LotId != 0)
-                                {
-                                    Commands.EnableTestingCheats();
-                                    BuyController.BuyDebug(true);
-                                    GameStates.TransitionToBuyMode(getHobbyLot, new EventArgs());
-                                    Commands.UpdateRoomMarkerVisibility();
-                                }
-                                return;
-                            }
-                            int @int = RandomUtil.GetInt(0, savedLotPlants.Length - 1);
-                            DoHobbyInteraction(sim, savedLotPlants[@int], GetHobbyLotAsHobbyLot(getHobbyLot.LotId).GetRandomInteractionFromWhitelist(InteractionTypesHobbies.Gardening), true);
-                            Camera.FocusOnSim(sim);
-                        }
-
-                        // If the home lot AND the residency lot has plants, then choose.
-                        if (plantsCurrentLot.Length != 0 && plantsWorld.Length != 0)
-                        {
-                            if (RandomUtil.RandomChance(50))
-                            {
-                                // Apply to home
-                                DoHobbyInteraction(sim, plantsCurrentLot[0], Plant.TendGarden<Plant>.Singleton, false);
-                            }
-                            else
-                            {
-                                // Apply to random lot with plants
-                                int @int = RandomUtil.GetInt(0, plantsWorld.Length - 1);
-
-                                if (plantsWorld[@int].LotCurrent.IsResidentialLot)
-                                {
-                                    return;
-                                }
-                                DoHobbyInteraction(sim, plantsWorld[@int], HarvestPlant.Harvest.Singleton, true);
-                            }
-                        }
-                        // Else if the lot has plants but the world doesn't...
-                        else if (plantsCurrentLot.Length != 0 && plantsWorld.Length == 0)
-                        {
-                            int @int = RandomUtil.GetInt(0, plantsCurrentLot.Length - 1);
-                            DoHobbyInteraction(sim, plantsCurrentLot[@int], Plant.TendGarden<Plant>.Singleton, false);
-                        }
-                        // Else if the homelot doesn't have plants but the world does... 
-                        else if (plantsCurrentLot.Length == 0 && plantsWorld.Length != 0)
-                        {
-                            // Apply to random lot with plants
-                            int @int = RandomUtil.GetInt(0, plantsWorld.Length - 1);
-
-                            if (plantsWorld[@int].LotCurrent.IsResidentialLot)
-                            {
-                                return;
-                            }
-
-                            DoHobbyInteraction(sim, plantsWorld[@int], HarvestPlant.Harvest.Singleton, true);
-                        }
-                        else
-                        {
-                            // Don't do anything at all if there are literally noooo plants. 
-                            return;
-                        }
+                        // If should used saved lot (so community lot) we get harvest plant. Otherwise Tend home garden.(Tend garden has a test where it checks lot validility. So we can't use that.) 
+                        HandleLotChoosingAndInteractions(shouldUseSavedLot, isAlreadyOnHobbyLot, skillPicked, interest, shouldUseSavedLot ? HarvestPlant.Harvest.Singleton : Plant.TendGarden<Plant>.Singleton, sim, typeof(Plant));
                     }
                     else if (skillPicked == "Fishing")
                     {
-                        // If we need to apply the interaction to go to the hobby lot...
-                        if (shouldUseSavedLot)
-                        {
-                            Lot getHobbyLot = GetHobbyLotAslot(interest.mInterestsGuid, skillPicked);
-                            FishingSpot[] savedLotFishing = getHobbyLot.GetObjects<FishingSpot>();
-                            if (savedLotFishing.Length == 0)
-                            {
-                                Camera.FocusOnLot(getHobbyLot.LotId, 0f);
-                                bool acceptedBuyMode = TwoButtonDialog.Show("It seems that you've applied this lot to be a 'Fishing' hobby lot for your townies to gather, but there aren't any ponds to fish at! Make sure that you add ponds With a fish spanwer to this lot: " + getHobbyLot.Name + " - " + getHobbyLot.Address + '\n' + '\n' + "Do you want to fix it now by going into buy mode on that lot? (BuyDeBug on, the cheat, will be turned on for this)", "Yes", "No");
-
-                                if (acceptedBuyMode && getHobbyLot.LotId != 0)
-                                {
-                                    Commands.EnableTestingCheats();
-                                    BuyController.BuyDebug(true);
-                                    GameStates.TransitionToBuyMode(getHobbyLot, new EventArgs());
-                                    Commands.UpdateRoomMarkerVisibility();
-                                }
-                                return;
-                            }
-                            int @int = RandomUtil.GetInt(0, savedLotFishing.Length - 1);
-                            if (savedLotFishing.Length > 0)
-                            {
-                                DoHobbyInteraction(sim, savedLotFishing[@int], FishAutonomously.Singleton, true);
-                            }
-                            else
-                            {
-                                return;
-                            }
-                        }
-                        if (isAlreadyOnHobbyLot)
-                        {
-                            Lot getHobbyLot = sim.LotCurrent;
-                            FishingSpot[] savedLotFishing = getHobbyLot.GetObjects<FishingSpot>();
-                            if (savedLotFishing.Length == 0)
-                            {
-                                Camera.FocusOnLot(getHobbyLot.LotId, 0f);
-                                bool acceptedBuyMode = TwoButtonDialog.Show("It seems that you've applied this lot to be a 'Fishing' hobby lot for your townies to gather, but there aren't any ponds to fish at! Make sure that you add ponds With a fish spanwer to this lot: " + getHobbyLot.Name + " - " + getHobbyLot.Address + '\n' + '\n' + "Do you want to fix it now by going into buy mode on that lot? (BuyDeBug on, the cheat, will be turned on for this)", "Yes", "No");
-
-                                if (acceptedBuyMode && getHobbyLot.LotId != 0)
-                                {
-                                    Commands.EnableTestingCheats();
-                                    BuyController.BuyDebug(true);
-                                    GameStates.TransitionToBuyMode(getHobbyLot, new EventArgs());
-                                    Commands.UpdateRoomMarkerVisibility();
-                                }
-                                return;
-
-                            }
-                            int @int = RandomUtil.GetInt(0, savedLotFishing.Length - 1);
-                            if (savedLotFishing.Length > 0)
-                            {
-                                DoHobbyInteraction(sim, savedLotFishing[@int], FishAutonomously.Singleton, true);
-                            }
-                            else
-                            {
-                                return;
-                            }
-                            Camera.FocusOnSim(sim);
-                        }
-
-
-                        // If the home lot AND the residency lot has plants, then choose.
-                        if (fishingspotHome.Length != 0 && fishingspot.Length != 0)
-                        {
-                            if (RandomUtil.RandomChance(50))
-                            {
-                                // Apply to home
-                                DoHobbyInteraction(sim, fishingspotHome[0], FishAutonomously.Singleton, false);
-                            }
-                            else
-                            {
-                                // Apply to random lot with plants
-                                int @int = RandomUtil.GetInt(0, fishingspot.Length - 1);
-
-                                if (fishingspot[@int].LotCurrent.IsResidentialLot)
-                                {
-                                    return;
-                                }
-                                DoHobbyInteraction(sim, fishingspot[@int], FishAutonomously.Singleton, true);
-                            }
-                        }
-                        // Else if the lot has plants but the world doesn't...
-                        else if (fishingspotHome.Length != 0 && fishingspot.Length == 0)
-                        {
-                            int @int = RandomUtil.GetInt(0, fishingspotHome.Length - 1);
-                            DoHobbyInteraction(sim, fishingspotHome[@int], FishAutonomously.Singleton, false);
-                        }
-                        // Else if the homelot doesn't have plants but the world does... 
-                        else if (fishingspotHome.Length == 0 && fishingspot.Length != 0)
-                        {
-                            // Apply to random lot with plants
-                            int @int = RandomUtil.GetInt(0, fishingspot.Length - 1);
-
-                            if (fishingspot[@int].LotCurrent.IsResidentialLot)
-                            {
-                                return;
-                            }
-                            DoHobbyInteraction(sim, fishingspot[@int], FishAutonomously.Singleton, true);
-                        }
-                        else
-                        {
-                            // Don't do anything at all if there are literally noooo plants. 
-                            return;
-                        }
-                        
+                        HandleLotChoosingAndInteractions(shouldUseSavedLot, isAlreadyOnHobbyLot, skillPicked, interest, FishAutonomously.Singleton, sim, typeof(FishingSpot));
                     }
                     else if (skillPicked == "Handiness")
                     {
-                        if(sim.IsAtHome)
+                        Lot getHobbyLot = GetHobbyLotAslot(interest.mInterestsGuid, skillPicked);
+
+                        GameObject[] LotItems;
+                        if (!shouldUseSavedLot && getHobbyLot != null)
                         {
-                            GameObject[] LotItems = sim.LotHome.GetObjects<GameObject>();
+                            LotItems = getHobbyLot.GetObjects<GameObject>();
+                        }
+                        else if (isAlreadyOnHobbyLot && getHobbyLot != null)
+                        {
+                            LotItems = getHobbyLot.GetObjects<GameObject>();
+                        }
+                        else
+                        {
+                            // Get both, assuming there is a hobby lot.
+                            List<GameObject> newItems = new List<GameObject>();
+                            if (getHobbyLot != null) 
+                                newItems = CommonHelpers.GetAllElectronicObjectsOnLot(getHobbyLot);
+                            newItems.AddRange(CommonHelpers.GetAllElectronicObjectsOnLot(sim.LotHome));
+
+                            LotItems = newItems.ToArray();
+                        }
+                        // fix empty list cases.
+                        if (LotItems != null)
+                        {
                             List<GameObject> TinkableItems = new List<GameObject>();
+                            StringBuilder stringBuilder = new StringBuilder();
 
                             foreach (GameObject obj in LotItems)
                             {
-                                if(obj.IsUpgradable)
+                                if (obj.IsUpgradable)
                                 {
                                     TinkableItems.Add(obj);
                                 }
                             }
+
                             GameObject randomUpgradableItem = RandomUtil.GetRandomObjectFromList(TinkableItems);
+
                             InteractionDefinition interaction = GetTinkableInteraction(randomUpgradableItem);
-                            if(interaction != null)
+                            if (interaction != null)
                             {
-                                DoHobbyInteraction(sim, randomUpgradableItem, interaction, false);
-                            }
-                            else
-                            {
-                                return;
+                                HandleLotChoosingAndInteractions(shouldUseSavedLot, isAlreadyOnHobbyLot, skillPicked, interest, interaction, sim, randomUpgradableItem);
                             }
                         }
+                        return;
                     }
                     break;
                 case InterestTypes.Fashion:
@@ -542,210 +376,11 @@ namespace Lyralei.InterestMod
 
                     if (skillPicked == "Gardening")
                     {
-                        // If we need to apply the interaction to go to the hobby lot...
-                        if (shouldUseSavedLot)
-                        {
-                            Lot getHobbyLot = GetHobbyLotAslot(InterestTypes.Environment, skillPicked);
-                            Plant[] savedLotPlants = getHobbyLot.GetObjects<Plant>();
-                            if (savedLotPlants.Length == 0)
-                            {
-                                Camera.FocusOnLot(getHobbyLot.LotId, 0f);
-                                bool acceptedBuyMode = TwoButtonDialog.Show("It seems that you've applied this lot to be a 'gardening' hobby lot for your townies to gather, but there aren't any plants! Make sure that you add plants to this lot: " + getHobbyLot.Name + " - " + getHobbyLot.Address + '\n' + '\n' + "Do you want to fix it now by going into buy mode on that lot? (BuyDeBug on, the cheat, will be turned on for this)", "Yes", "No");
-
-                                if (acceptedBuyMode && getHobbyLot.LotId != 0)
-                                {
-                                    Commands.EnableTestingCheats();
-                                    BuyController.BuyDebug(true);
-                                    GameStates.TransitionToBuyMode(getHobbyLot, new EventArgs());
-                                    Commands.UpdateRoomMarkerVisibility();
-                                }
-                                return;
-                            }
-                            int @int = RandomUtil.GetInt(0, savedLotPlants.Length - 1);
-                            DoHobbyInteraction(sim, savedLotPlants[@int], HarvestPlant.Harvest.Singleton, true);
-                        }
-                        if (isAlreadyOnHobbyLot)
-                        {
-                            Lot getHobbyLot = sim.LotCurrent;
-                            Plant[] savedLotPlants = getHobbyLot.GetObjects<Plant>();
-                            if (savedLotPlants.Length == 0)
-                            {
-                                Camera.FocusOnLot(getHobbyLot.LotId, 0f);
-                                bool acceptedBuyMode = TwoButtonDialog.Show("It seems that you've applied this lot to be a 'gardening' hobby lot for your townies to gather, but there aren't any plants! Make sure that you add plants to this lot: " + getHobbyLot.Name + " - " + getHobbyLot.Address + '\n' + '\n' + "Do you want to fix it now by going into buy mode on that lot? (BuyDeBug on, the cheat, will be turned on for this)", "Yes", "No");
-
-                                if (acceptedBuyMode && getHobbyLot.LotId != 0)
-                                {
-                                    Commands.EnableTestingCheats();
-                                    BuyController.BuyDebug(true);
-                                    GameStates.TransitionToBuyMode(getHobbyLot, new EventArgs());
-                                    Commands.UpdateRoomMarkerVisibility();
-                                }
-                                return;
-                            }
-                            int @int = RandomUtil.GetInt(0, savedLotPlants.Length - 1);
-                            DoHobbyInteraction(sim, savedLotPlants[@int], HarvestPlant.Harvest.Singleton, true);
-                            Camera.FocusOnSim(sim);
-
-                        }
-
-                        // If the home lot AND the residency lot has plants, then choose.
-                        if (plantsCurrentLot.Length != 0 && plantsWorld.Length != 0)
-                        {
-                            if (RandomUtil.RandomChance(50))
-                            {
-                                // Apply to home
-                                DoHobbyInteraction(sim, plantsCurrentLot[0], Plant.TendGarden<Plant>.Singleton, false);
-                            }
-                            else
-                            {
-                                // Apply to random lot with plants
-                                int @int = RandomUtil.GetInt(0, plantsWorld.Length - 1);
-
-                                if (plantsWorld[@int].LotCurrent.IsResidentialLot)
-                                {
-                                    return;
-                                }
-                                DoHobbyInteraction(sim, plantsWorld[@int], HarvestPlant.Harvest.Singleton, true);
-                            }
-                        }
-                        // Else if the lot has plants but the world doesn't...
-                        else if (plantsCurrentLot.Length != 0 && plantsWorld.Length == 0)
-                        {
-                            int @int = RandomUtil.GetInt(0, plantsCurrentLot.Length - 1);
-                            DoHobbyInteraction(sim, plantsCurrentLot[@int], Plant.TendGarden<Plant>.Singleton, false);
-                        }
-                        // Else if the homelot doesn't have plants but the world does... 
-                        else if (plantsCurrentLot.Length == 0 && plantsWorld.Length != 0)
-                        {
-                            // Apply to random lot with plants
-                            int @int = RandomUtil.GetInt(0, plantsWorld.Length - 1);
-
-                            if (plantsWorld[@int].LotCurrent.IsResidentialLot)
-                            {
-                                return;
-                            }
-
-                            DoHobbyInteraction(sim, plantsWorld[@int], HarvestPlant.Harvest.Singleton, true);
-                        }
-                        else
-                        {
-                            // Don't do anything at all if there are literally noooo plants. 
-                            return;
-                        }
+                        HandleLotChoosingAndInteractions(shouldUseSavedLot, isAlreadyOnHobbyLot, skillPicked, interest, shouldUseSavedLot ? HarvestPlant.Harvest.Singleton : Plant.TendGarden<Plant>.Singleton, sim, typeof(Plant));
                     }
                     else if (skillPicked == "Fishing")
                     {
-                        // If we need to apply the interaction to go to the hobby lot...
-                        if (shouldUseSavedLot)
-                        {
-                            Lot getHobbyLot = GetHobbyLotAslot(interest.mInterestsGuid, skillPicked);
-                            FishingSpot[] savedLotFishing = getHobbyLot.GetObjects<FishingSpot>();
-
-                            if (savedLotFishing.Length == 0)
-                            {
-                                Camera.FocusOnLot(getHobbyLot.LotId, 0f);
-                                bool acceptedBuyMode = TwoButtonDialog.Show("It seems that you've applied this lot to be a 'Fishing' hobby lot for your townies to gather, but there aren't any ponds to fish at! Make sure that you add ponds With a fish spanwer to this lot: " + getHobbyLot.Name + " - " + getHobbyLot.Address + '\n' + '\n' + "Do you want to fix it now by going into buy mode on that lot? (BuyDeBug on, the cheat, will be turned on for this)", "Yes", "No");
-
-                                if (acceptedBuyMode && getHobbyLot.LotId != 0)
-                                {
-                                    Commands.EnableTestingCheats();
-                                    BuyController.BuyDebug(true);
-                                    GameStates.TransitionToBuyMode(getHobbyLot, new EventArgs());
-                                    Commands.UpdateRoomMarkerVisibility();
-                                }
-                                return;
-                            }
-
-                            int @int = RandomUtil.GetInt(0, savedLotFishing.Length - 1);
-
-                            if (savedLotFishing.Length > 0)
-                            {
-                                DoHobbyInteraction(sim, savedLotFishing[@int], FishAutonomously.Singleton, true);
-                            }
-                            else
-                            {
-                                return;
-                            }
-                        }
-
-                        if (isAlreadyOnHobbyLot)
-                        {
-                            Lot getHobbyLot = sim.LotCurrent;
-                            FishingSpot[] savedLotFishing = getHobbyLot.GetObjects<FishingSpot>();
-
-                            if (savedLotFishing.Length == 0)
-                            {
-                                Camera.FocusOnLot(getHobbyLot.LotId, 0f);
-                                bool acceptedBuyMode = TwoButtonDialog.Show("It seems that you've applied this lot to be a 'Fishing' hobby lot for your townies to gather, but there aren't any ponds to fish at! Make sure that you add ponds With a fish spanwer to this lot: " + getHobbyLot.Name + " - " + getHobbyLot.Address + '\n' + '\n' + "Do you want to fix it now by going into buy mode on that lot? (BuyDeBug on, the cheat, will be turned on for this)", "Yes", "No");
-
-                                if (acceptedBuyMode && getHobbyLot.LotId != 0)
-                                {
-                                    Commands.EnableTestingCheats();
-                                    BuyController.BuyDebug(true);
-                                    GameStates.TransitionToBuyMode(getHobbyLot, new EventArgs());
-                                    Commands.UpdateRoomMarkerVisibility();
-                                }
-                                return;
-                            }
-
-                            int @int = RandomUtil.GetInt(0, savedLotFishing.Length - 1);
-
-                            if (savedLotFishing.Length > 0)
-                            {
-                                DoHobbyInteraction(sim, savedLotFishing[@int], FishAutonomously.Singleton, true);
-                            }
-                            else
-                            {
-                                return;
-                            }
-                            Camera.FocusOnSim(sim);
-
-
-                        }
-
-                        // If the home lot AND the residency lot has plants, then choose.
-                        if (fishingspotHome.Length != 0 && fishingspot.Length != 0)
-                        {
-                            if (RandomUtil.RandomChance(50))
-                            {
-                                // Apply to home
-                                DoHobbyInteraction(sim, fishingspotHome[0], FishAutonomously.Singleton, false);
-                            }
-                            else
-                            {
-                                // Apply to random lot with plants
-                                int @int = RandomUtil.GetInt(0, fishingspot.Length - 1);
-
-                                if (fishingspot[@int].LotCurrent.IsResidentialLot)
-                                {
-                                    return;
-                                }
-                                DoHobbyInteraction(sim, fishingspot[@int], FishAutonomously.Singleton, true);
-                            }
-                        }
-                        // Else if the lot has plants but the world doesn't...
-                        else if (fishingspotHome.Length != 0 && fishingspot.Length == 0)
-                        {
-                            int @int = RandomUtil.GetInt(0, fishingspotHome.Length - 1);
-                            DoHobbyInteraction(sim, fishingspotHome[@int], FishAutonomously.Singleton, false);
-                        }
-                        // Else if the homelot doesn't have plants but the world does... 
-                        else if (fishingspotHome.Length == 0 && fishingspot.Length != 0)
-                        {
-                            // Apply to random lot with plants
-                            int @int = RandomUtil.GetInt(0, fishingspot.Length - 1);
-
-                            if (fishingspot[@int].LotCurrent.IsResidentialLot)
-                            {
-                                return;
-                            }
-                            DoHobbyInteraction(sim, fishingspot[@int], FishAutonomously.Singleton, true);
-                        }
-                        else
-                        {
-                            // Don't do anything at all if there are literally noooo plants. 
-                            return;
-                        }
+                        HandleLotChoosingAndInteractions(shouldUseSavedLot, isAlreadyOnHobbyLot, skillPicked, interest, FishAutonomously.Singleton, sim, typeof(FishingSpot));
                     }
 
                     break;
@@ -775,74 +410,254 @@ namespace Lyralei.InterestMod
             }
         }
 
+        /// <summary>
+        /// Use this one ONLY if obtaining objects need to be done differently. Currently it's only used for Tinkerable items
+        /// </summary>
+        /// <param name="shouldUseSavedLot"></param>
+        /// <param name="isAlreadyOnHobbyLot"></param>
+        /// <param name="skillPicked"></param>
+        /// <param name="interest"></param>
+        /// <param name="interactionDefinition"></param>
+        /// <param name="sim"></param>
+        /// <param name="gameObject"></param>
+        private static void HandleLotChoosingAndInteractions(bool shouldUseSavedLot, bool isAlreadyOnHobbyLot, string skillPicked, Interest interest, InteractionDefinition interactionDefinition, Sim sim, GameObject gameObject)
+        {
+
+            if (shouldUseSavedLot)
+            {
+                Lot getHobbyLot = GetHobbyLotAslot(interest.mInterestsGuid, skillPicked);
+                if (gameObject == null && getHobbyLot.LotId != 0)
+                {
+                    Camera.FocusOnLot(getHobbyLot.LotId, 0f);
+                    bool acceptedBuyMode = TwoButtonDialog.Show("It seems that you've applied this lot to be a '" + skillPicked + "' hobby lot for your townies to gather, but there aren't any required items of the hobby on this lot: " + getHobbyLot.Name + " - " + getHobbyLot.Address + '\n' + '\n' + "Do you want to fix it now by going into buy mode on that lot? (BuyDeBug on, the cheat, will be turned on for this)", "Yes", "No");
+
+                    if (acceptedBuyMode)
+                    {
+                        Commands.EnableTestingCheats();
+                        BuyController.BuyDebug(true);
+                        GameStates.TransitionToBuyMode(getHobbyLot, new EventArgs());
+                        Commands.UpdateRoomMarkerVisibility();
+                    }
+                    return;
+                }
+                if (gameObject != null)
+                {
+                    DoHobbyInteraction(sim, gameObject, GetHobbyLotAsHobbyLot(getHobbyLot.LotId).GetRandomInteractionFromWhitelist(interest.Guid, sim.SimDescription), true, null, null, null);
+                }
+                return;
+            }
+            else if (isAlreadyOnHobbyLot)
+            {
+                Lot getHobbyLot = sim.LotCurrent;
+
+                if (gameObject == null && getHobbyLot.LotId != 0)
+                {
+                    Camera.FocusOnLot(getHobbyLot.LotId, 0f);
+                    bool acceptedBuyMode = TwoButtonDialog.Show("It seems that you've applied this lot to be a 'Fishing' hobby lot for your townies to gather, but there aren't any ponds to fish at! Make sure that you add ponds With a fish spanwer to this lot: " + getHobbyLot.Name + " - " + getHobbyLot.Address + '\n' + '\n' + "Do you want to fix it now by going into buy mode on that lot? (BuyDeBug on, the cheat, will be turned on for this)", "Yes", "No");
+
+                    if (acceptedBuyMode && getHobbyLot.LotId != 0)
+                    {
+                        Commands.EnableTestingCheats();
+                        BuyController.BuyDebug(true);
+                        GameStates.TransitionToBuyMode(getHobbyLot, new EventArgs());
+                        Commands.UpdateRoomMarkerVisibility();
+                    }
+                    return;
+
+                }
+                if (gameObject != null)
+                {
+                    DoHobbyInteraction(sim, gameObject, GetHobbyLotAsHobbyLot(getHobbyLot.LotId).GetRandomInteractionFromWhitelist(interest.Guid, sim.SimDescription), true, null, null, null);
+                }
+                return;
+            }
+            else
+            {
+                DoHobbyInteraction(sim, gameObject, interactionDefinition, false, null, null, null);
+            }
+
+
+        }
+
+
+        private static void HandleLotChoosingAndInteractions(bool shouldUseSavedLot, bool isAlreadyOnHobbyLot, string skillPicked, Interest interest, InteractionDefinition interactionDefinition, Sim sim, Type type)
+        {
+
+            GameObject[] spots = Sims3.SimIFace.Queries.GetObjects(type) as GameObject[];
+            List<IGameObject> spotsHome = sim.LotHome.GetObjects(type, null);
+            
+            // Stops here and we don't have hobby lots...
+
+
+            if (shouldUseSavedLot)
+            {
+                Lot getHobbyLot = GetHobbyLotAslot(interest.mInterestsGuid, skillPicked);
+                List<IGameObject> savedLotHobbyItems = getHobbyLot.GetObjects(type, null);
+                if (savedLotHobbyItems.Count == 0)
+                {
+                    Camera.FocusOnLot(getHobbyLot.LotId, 0f);
+                    bool acceptedBuyMode = TwoButtonDialog.Show("It seems that you've applied this lot to be a '" + skillPicked + "' hobby lot for your townies to gather, but there aren't any required items of the hobby on this lot: " + getHobbyLot.Name + " - " + getHobbyLot.Address + '\n' + '\n' + "Do you want to fix it now by going into buy mode on that lot? (BuyDeBug on, the cheat, will be turned on for this)", "Yes", "No");
+
+                    if (acceptedBuyMode && getHobbyLot.LotId != 0)
+                    {
+                        Commands.EnableTestingCheats();
+                        BuyController.BuyDebug(true);
+                        GameStates.TransitionToBuyMode(getHobbyLot, new EventArgs());
+                        Commands.UpdateRoomMarkerVisibility();
+                    }
+                    return;
+                }
+                int @int = RandomUtil.GetInt(0, savedLotHobbyItems.Count - 1);
+                if (savedLotHobbyItems.Count > 0)
+                {
+                    DoHobbyInteraction(sim, GameObject.GetObject(savedLotHobbyItems[@int].ObjectId), GetHobbyLotAsHobbyLot(getHobbyLot.LotId).GetRandomInteractionFromWhitelist(interest.Guid, sim.SimDescription), true, null,null,null) ;
+                }
+                return;
+            }
+            if (isAlreadyOnHobbyLot)
+            {
+
+                Lot getHobbyLot = sim.LotCurrent;
+                List<IGameObject> savedLotHobbyItems = getHobbyLot.GetObjects(type, null);
+                if (savedLotHobbyItems.Count == 0)
+                {
+                    Camera.FocusOnLot(getHobbyLot.LotId, 0f);
+                    bool acceptedBuyMode = TwoButtonDialog.Show("It seems that you've applied this lot to be a 'Fishing' hobby lot for your townies to gather, but there aren't any ponds to fish at! Make sure that you add ponds With a fish spanwer to this lot: " + getHobbyLot.Name + " - " + getHobbyLot.Address + '\n' + '\n' + "Do you want to fix it now by going into buy mode on that lot? (BuyDeBug on, the cheat, will be turned on for this)", "Yes", "No");
+
+                    if (acceptedBuyMode && getHobbyLot.LotId != 0)
+                    {
+                        Commands.EnableTestingCheats();
+                        BuyController.BuyDebug(true);
+                        GameStates.TransitionToBuyMode(getHobbyLot, new EventArgs());
+                        Commands.UpdateRoomMarkerVisibility();
+                    }
+                    return;
+
+                }
+                int @int = RandomUtil.GetInt(0, savedLotHobbyItems.Count - 1);
+                if (savedLotHobbyItems.Count > 0)
+                {
+                    DoHobbyInteraction(sim, GameObject.GetObject(savedLotHobbyItems[@int].ObjectId), GetHobbyLotAsHobbyLot(getHobbyLot.LotId).GetRandomInteractionFromWhitelist(interest.Guid, sim.SimDescription), true, null, null, null);
+                }
+                return;
+            }
+
+
+            // If the home lot AND the residency lot has plants, then choose.
+            if (spotsHome.Count != 0 && spots.Length != 0)
+            {
+
+                if (RandomUtil.RandomChance(50))
+                {
+                    // Apply to home
+                    DoHobbyInteraction(sim, GameObject.GetObject(spotsHome[0].ObjectId), interactionDefinition, false, null, null, null);
+                }
+                else
+                {
+                    // Apply to random lot with plants
+                    int @int = RandomUtil.GetInt(0, spots.Length - 1);
+
+                    if (spots[@int].LotCurrent.IsResidentialLot)
+                    {
+                        return;
+                    }
+                    DoHobbyInteraction(sim, GameObject.GetObject(spots[@int].ObjectId), interactionDefinition, true, null, null, null);
+                }
+            }
+            // Else if the lot has plants but the world doesn't...
+            else if (spotsHome.Count != 0 && spots.Length == 0)
+            {
+                int @int = RandomUtil.GetInt(0, spotsHome.Count - 1);
+                DoHobbyInteraction(sim, GameObject.GetObject(spotsHome[@int].ObjectId), interactionDefinition, false, null, null, null);
+            }
+            // Else if the homelot doesn't have plants but the world does... 
+            else if (spotsHome.Count == 0 && spots.Length != 0)
+            {
+                // Apply to random lot with plants
+                int @int = RandomUtil.GetInt(0, spots.Length - 1);
+
+                if (spots[@int].LotCurrent.IsResidentialLot)
+                {
+                    return ;
+                }
+                DoHobbyInteraction(sim, GameObject.GetObject(spots[@int].ObjectId), interactionDefinition, true, null, null, null);
+            }
+            else
+            {
+                // Don't do anything at all if there's nothing to do. 
+                return;
+            }
+            return;
+        }
+
 
         public static InteractionDefinition GetTinkableInteraction(GameObject obj)
         {
-            if (obj.GetType().IsAssignableFrom(typeof(WashingMachine)))
+            if (IsSameOrSubclass(typeof(WashingMachine), obj.GetType()))
             {
                 return WashingMachine.Tinker.Singleton;
             }
-            else if(obj.GetType().IsAssignableFrom(typeof(Stove)))
+            else if(IsSameOrSubclass(typeof(Stove), obj.GetType()))
             {
                 return Stove.Tinker.Singleton;
             }
-            else if (obj.GetType().IsAssignableFrom(typeof(Microwave)))
+            else if (IsSameOrSubclass(typeof(Microwave), obj.GetType()))
             {
                 return Microwave.Tinker.Singleton;
             }
-            else if (obj.GetType().IsAssignableFrom(typeof(Dishwasher)))
+            else if (IsSameOrSubclass(typeof(Dishwasher), obj.GetType()))
             {
                 return Dishwasher.Tinker.Singleton;
             }
-            else if (obj.GetType().IsAssignableFrom(typeof(SleepPodFuture)))
+            else if (IsSameOrSubclass(typeof(SleepPodFuture), obj.GetType()))
             {
                 return SleepPodFuture.Tinker.Singleton;
             }
-            else if (obj.GetType().IsAssignableFrom(typeof(ShowerOutdoor)))
+            else if (IsSameOrSubclass(typeof(ShowerOutdoor), obj.GetType()))
             {
                 return ShowerOutdoor.Tinker.Singleton;
             }
-            else if (obj.GetType().IsAssignableFrom(typeof(Shower)))
+            else if (IsSameOrSubclass(typeof(Shower), obj.GetType()))
             {
                 return Shower.Tinker.Singleton;
             }
-            else if (obj.GetType().IsAssignableFrom(typeof(Computer)))
+            else if (IsSameOrSubclass(typeof(Computer), obj.GetType()))
             {
                 return Computer.Tinker.Singleton;
             }
-            else if (obj.GetType().IsAssignableFrom(typeof(Sink)))
+            else if (IsSameOrSubclass(typeof(Sink), obj.GetType()))
             {
                 return Sink.Tinker.Singleton;
             }
-            else if (obj.GetType().IsAssignableFrom(typeof(Stereo)))
+            else if (IsSameOrSubclass(typeof(Stereo), obj.GetType()))
             {
                 return Stereo.Tinker.Singleton;
             }
-            else if (obj.GetType().IsAssignableFrom(typeof(TV)))
+            else if (IsSameOrSubclass(typeof(TV), obj.GetType()))
             {
                 return TV.Tinker.Singleton;
             }
-            else if (obj.GetType().IsAssignableFrom(typeof(Toilet)))
+            else if (IsSameOrSubclass(typeof(Toilet), obj.GetType()))
             {
                 return Toilet.Tinker.Singleton;
             }
-            else if (obj.GetType().IsAssignableFrom(typeof(Bathtub)))
+            else if (IsSameOrSubclass(typeof(Bathtub), obj.GetType()))
             {
                 return Bathtub.Tinker.Singleton;
             }
-            else if (obj.GetType().IsAssignableFrom(typeof(AllInOneBathroom)))
+            else if (IsSameOrSubclass(typeof(AllInOneBathroom), obj.GetType()))
             {
                 return AllInOneBathroom.Tinker.Singleton;
             }
-            else if (obj.GetType().IsAssignableFrom(typeof(HotTubBase)))
+            else if (IsSameOrSubclass(typeof(HotTubBase), obj.GetType()))
             {
                 return HotTubBase.Tinker.Singleton;
             }
-            else if (obj.GetType().IsAssignableFrom(typeof(Fireplace)))
+            else if (IsSameOrSubclass(typeof(Fireplace), obj.GetType()))
             {
                 return Fireplace.Tinker.Singleton;
             }
-            else if (obj.GetType().IsAssignableFrom(typeof(TrashCompactor)))
+            else if (IsSameOrSubclass(typeof(TrashCompactor), obj.GetType()))
             {
                 return TrashCompactor.Tinker.Singleton;
             }
@@ -850,6 +665,12 @@ namespace Lyralei.InterestMod
             {
                 return null;
             }
+        }
+
+        public static bool IsSameOrSubclass(Type potentialBase, Type potentialDescendant)
+        {
+            return potentialDescendant.IsSubclassOf(potentialBase)
+                   || potentialDescendant == potentialBase;
         }
 
         public static HobbyLot GetHobbyLotAsHobbyLot(ulong Lotid)
@@ -911,43 +732,69 @@ namespace Lyralei.InterestMod
             return null;
         }
 
-        public static void DoHobbyInteraction(Sim sim, GameObject gameObject, InteractionDefinition interactionDef,  bool IsForCommunityLot)
+
+        public static void DoHobbyInteraction(Sim sim, GameObject gameObject, InteractionDefinition interactionDef,  bool IsForCommunityLot, Callback callbackStarted, Callback callbackOnCompleted, Callback callbackOnFailed)
         {
+            if(gameObject == null) {  return; }
+            if (sim == null) { return; }
+            if (interactionDef == null) { return; }
 
             try
             {
+
+                bool wasInited = false; // Used in case we got a non-initiated townie.
+                // If sim is an NPC with no home in the direct world (so a townie) get their ass into the world :p
+                if (sim == null)
+                {
+                    SimOutfit outfit = sim.SimDescription.GetOutfit(OutfitCategories.Everyday, 0);
+                    sim = ((!outfit.IsValid) ? sim.SimDescription.Instantiate(gameObject.LotCurrent) : sim.SimDescription.Instantiate(gameObject.LotCurrent, outfit.Key));
+                    wasInited = true;
+                }
+
                 InteractionInstance interactionInstance = null;
                 InteractionInstance GoTo = null;
-                
+
                 if (IsForCommunityLot)
                 {
                     // if(HarvestPlant.HarvestTest(plant, sim))
                     //{
+                    if (!wasInited)
+                    {
+                        InteractionDefinition interactionDefinition = (gameObject.LotCurrent.IsCommunityLot ? VisitCommunityLot.Singleton : GoToLot.Singleton);
+                        InterestManager.print(interactionDefinition.ToString());
 
-                    GoTo = VisitLot.Singleton.CreateInstance(gameObject.LotCurrent, sim, sim.ForcePushPriority(), false, false) as VisitLot;
+                        InterestManager.print(gameObject.LotCurrent.Name);
+                        InterestManager.print(sim.FullName);
 
-                    //GoTo = GoToLot.Singleton.CreateInstance(gameObject.LotCurrent, sim, sim.ForcePushPriority(), true, true);
-                    interactionInstance = interactionDef.CreateInstance(gameObject, sim, sim.ForcePushPriority(), true, true) as InteractionInstance;
-                    //}
-                    //else
-                    //{
-                    //   return;
-                    //}
+                        GoTo = interactionDefinition.CreateInstanceWithCallbacks(gameObject.LotCurrent, sim, sim.ForcePushPriority(), true, true, null, (Sim s, float x) => { GetSimToDoHobby(sim, gameObject, interactionDef); }, null);
+
+                        if (GoTo != null)
+                            sim.InteractionQueue.AddNextIfPossible(GoTo);
+
+                        return;
+                    }
                 }
                 else
                 {
                     interactionInstance = interactionDef.CreateInstance(gameObject, sim, new InteractionPriority(InteractionPriorityLevel.High), true, true) as InteractionInstance;
                 }
-                if (GoTo != null)
-                {
-                    sim.InteractionQueue.TryPushAsContinuation(sim.CurrentInteraction, GoTo);
-                }
-                sim.InteractionQueue.TryPushAsContinuation(sim.CurrentInteraction, interactionInstance);
+
+                sim.InteractionQueue.AddNextIfPossible(interactionInstance);
             }
             catch (Exception ex)
             {
                 GlobalOptionsHobbiesAndInterests.print(ex.ToString());
             }
+        }
+
+        public static void GetSimToDoHobby(Sim sim, GameObject gameObject, InteractionDefinition interactionDef)
+        {
+            if(sim == null || gameObject == null || interactionDef == null) return;
+
+            InteractionInstance interactionInstance = interactionDef.CreateInstance(gameObject, sim, sim.ForcePushPriority(), true, true);
+            if(interactionInstance == null) return;
+
+            sim.InteractionQueue.AddNext(interactionInstance); // Doesnt work with gardening
         }
 
         public static void PutLeftoversAway(Sim sim)

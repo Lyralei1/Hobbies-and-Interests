@@ -37,5 +37,35 @@ namespace Sims3.Gameplay.Lyralei.InterestsAndHobbies
 
         [Tunable]
         public static float kAmountOfPagesASimReadsResearch = 30f;
+
+        /* 
+         * =======================================================
+         * ||                                                   ||
+         * ||            Energy Manager Tunables                ||
+         * ||                                                   ||
+         * =======================================================
+         */
+
+
+        [Tunable]
+        public static int mChanceOfEnergyCrisis = 10;
+        [Tunable]
+        public static int mAmountIncreaseAtCrisisOffPeak = 10;
+        [Tunable]
+        public static int mAmountIncreaseAtCrisisPeak = 20;
+        [Tunable]
+        public static float mStartPeakHour = 16f;
+        [Tunable]
+        public static float mEndPeakHour = 3f;
+        [Tunable]
+        public static float mStartOffPeakHour = 4f;
+        [Tunable]
+        public static float mEndOffPeakHour = 15f;
+        [Tunable]
+        public static float mSubPointsToAddIfEcoFriendly = 1f;
+
+
+
+
     }
 }

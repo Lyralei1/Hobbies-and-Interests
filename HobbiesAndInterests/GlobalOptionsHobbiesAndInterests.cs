@@ -2,6 +2,7 @@
 using HobbiesAndInterests.HelperClasses;
 using Lyralei;
 using Lyralei.InterestMod;
+using Lyralei.UI;
 using Sims3.Gameplay.Abstracts;
 using Sims3.Gameplay.Actors;
 using Sims3.Gameplay.ActorSystems;
@@ -9,6 +10,7 @@ using Sims3.Gameplay.Autonomy;
 using Sims3.Gameplay.CAS;
 using Sims3.Gameplay.Core;
 using Sims3.Gameplay.EventSystem;
+using Sims3.Gameplay.Interactions;
 using Sims3.Gameplay.Objects;
 using Sims3.Gameplay.Objects.Electronics;
 using Sims3.Gameplay.Objects.Environment;
@@ -42,17 +44,19 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
 
         static GlobalOptionsHobbiesAndInterests()
         {
-            World.sOnWorldLoadFinishedEventHandler += new EventHandler(OnWorldLoadFinished);
-            World.sOnWorldQuitEventHandler += new EventHandler(OnWorldQuit);
-            LoadSaveManager.ObjectGroupsPreLoad += new ObjectGroupsPreLoadHandler(OnPreload);
-            Simulator.PostInit += CareerInstantiatorManager.PostInitCareer;
+            World.sOnWorldLoadFinishedEventHandler      += new EventHandler(OnWorldLoadFinished);
+            World.sOnWorldQuitEventHandler              += new EventHandler(OnWorldQuit);
+            LoadSaveManager.ObjectGroupsPreLoad         += new ObjectGroupsPreLoadHandler(OnPreload);
+            Simulator.mPostInitHandler                  += CareerInstantiatorManager.PostInitCareer;
+
+            LotManager.ActiveLotChanged                 += EnergyManager.PickEnergyCompanyForFamily;
 
             // Used for handling CC content OnBought
-            World.OnObjectPlacedInLotEventHandler += new EventHandler(CustomContentHelper.OnBuildBuy);
+            World.OnObjectPlacedInLotEventHandler       += new EventHandler(CustomContentHelper.OnBuildBuy);
 
-
+             
             //LoadSaveManager.ObjectGroupsPreLoad += new ObjectGroupsPreLoadHandler(ParseBooks);
-            World.sOnStartupAppEventHandler += new EventHandler(OnStartupApp);
+            World.sOnStartupAppEventHandler             += new EventHandler(OnStartupApp);
         }
 
         [PersistableStatic] static bool didAllmagazines = false;
@@ -175,6 +179,12 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                     }
                 }
 
+                EnergyManager.Startup();
+
+
+                OneShotFunction mShowInvitationFunction = new OneShotFunction(EnergyManager.PickEnergyCompanyForFamily);
+                Simulator.AddObject(mShowInvitationFunction);
+
                 //sAlarmTownieEAFixes = AlarmManager.Global.AddAlarm(5f, TimeUnit.Minutes, TownieInterestHelper.TownieHobbyFixer, "TownieFixes", AlarmType.NeverPersisted, null);
 
 
@@ -188,9 +198,9 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                     {
                         AddInteractionsObjects(solar);
                     }
-                    sBoughtObjectLister = EventTracker.AddListener(EventTypeId.kBoughtObject, new ProcessEventDelegate(OnObjectBought));
-                    sBoughtObjectLister = EventTracker.AddListener(EventTypeId.kObjectStateChanged, new ProcessEventDelegate(OnObjectBought));
+
                 }
+
 
                 foreach (Computer computer in Sims3.Gameplay.Queries.GetObjects<Computer>())
                 {
@@ -198,18 +208,33 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                     {
                         AddInteractionsObjects(computer);
                     }
-                    sBoughtObjectLister = EventTracker.AddListener(EventTypeId.kBoughtObject, new ProcessEventDelegate(OnObjectBought));
-                    sBoughtObjectLister = EventTracker.AddListener(EventTypeId.kObjectStateChanged, new ProcessEventDelegate(OnObjectBought));
                 }
+
+                Phone[] phones = Sims3.Gameplay.Queries.GetObjects<Phone>();
+
+                if (phones != null || phones.Length > 0)
+                {
+                    foreach (Phone phone in phones)
+                    {
+                        if (phone != null)
+                        {
+                            AddInteractionsObjects(phone);
+
+                        }
+
+                    }
+
+                }
+
 
                 foreach (PhoneSmart phoneSmart in Sims3.Gameplay.Queries.GetObjects<PhoneSmart>())
                 {
                     if (phoneSmart != null)
                     {
                         AddInteractionsObjects(phoneSmart);
+
                     }
-                    sBoughtObjectLister = EventTracker.AddListener(EventTypeId.kBoughtObject, new ProcessEventDelegate(OnObjectBought));
-                    sBoughtObjectLister = EventTracker.AddListener(EventTypeId.kObjectStateChanged, new ProcessEventDelegate(OnObjectBought));
+
                 }
 
                 foreach (Lot lot in Sims3.Gameplay.Queries.GetObjects<Lot>())
@@ -217,22 +242,25 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                     if (lot != null)
                     {
                         AddInteractionsObjects(lot);
+
                     }
-                    sBoughtObjectLister = EventTracker.AddListener(EventTypeId.kBoughtObject, new ProcessEventDelegate(OnObjectBought));
-                    sBoughtObjectLister = EventTracker.AddListener(EventTypeId.kObjectStateChanged, new ProcessEventDelegate(OnObjectBought));
+
                 }
 
-                foreach (CityHall rabbithole in Sims3.Gameplay.Queries.GetObjects<CityHall>())
-                {
-                    if (rabbithole != null)
-                    {
-                        CareerInstantiatorManager.AddInteractionsCareers(rabbithole);
-                        sBoughtObjectLister = EventTracker.AddListener(EventTypeId.kBoughtObject, new ProcessEventDelegate(OnObjectBought));
-                        sBoughtObjectLister = EventTracker.AddListener(EventTypeId.kObjectStateChanged, new ProcessEventDelegate(OnObjectBought));
-                    }
-                }
+                //foreach (CityHall rabbithole in Sims3.Gameplay.Queries.GetObjects<CityHall>())
+                //{
+                //    if (rabbithole != null)
+                //    {
+                //        CareerInstantiatorManager.AddInteractionsCareers(rabbithole);
+
+                //    }
+                //}
+
+                EventTracker.AddListener(EventTypeId.kBoughtObject, new ProcessEventDelegate(OnObjectBought));
+                EventTracker.AddListener(EventTypeId.kObjectStateChanged, new ProcessEventDelegate(OnObjectBought));
+
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 print(ex.ToString());
             }
@@ -272,6 +300,15 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                 if (computer != null)
                 {
                     RemoveInteractionsFromObject(computer);
+                }
+                EventTracker.RemoveListener(sBoughtObjectLister);
+            }
+
+            foreach (Phone phoneSmart in Sims3.Gameplay.Queries.GetObjects<Phone>())
+            {
+                if (phoneSmart != null)
+                {
+                    RemoveInteractionsFromObject(phoneSmart);
                 }
                 EventTracker.RemoveListener(sBoughtObjectLister);
             }
@@ -384,7 +421,7 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
 
                 foreach(KeyValuePair<string, string> kpv in SocialDataAfterUpdateOverrides)
                 {
-                    LoadOverrideInfo(kpv.key, kpv.value, true);
+                    LoadOverrideInfo(kpv.Key, kpv.Value, true);
                 }
 
 
@@ -650,6 +687,9 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
             try
             {
                 GameObject obj = e.TargetObject as GameObject;
+
+                if (obj == null)
+                   return ListenerAction.Keep;
                 //if (solar != null)
                 //{
                 //    if (solar.IsOnRoof)
@@ -693,68 +733,45 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                     //pair.InteractionDefinition.GetType() == SimDebugInteractions.ExtractSaveData.Singleton.GetType() ||
                     //pair.InteractionDefinition.GetType() == SimDebugInteractions.SaveTheData.Singleton.GetType() ||
                     //pair.InteractionDefinition.GetType() == SimDebugInteractions.CheckTheSavedDataList.Singleton.GetType() ||
-                    pair.InteractionDefinition.GetType() == SimDebugInteractions.ChooseAHobby.Singleton.GetType()
-
+                    pair.InteractionDefinition.GetType() == SimDebugInteractions.ChooseAHobbyDEBUG.Singleton.GetType() ||
+                    pair.InteractionDefinition.GetType() == ShowHobbies.Singleton.GetType()
                     )
                 {
                     return;
                 }
             }
+
+
             //sim.AddInteraction(SimDebugInteractions.ListInterestData.Singleton);
             //sim.AddInteraction(SimDebugInteractions.CheckInterestDetails.Singleton);
+
             sim.AddInteraction(ShowKnownInterest.Singleton);
             sim.AddInteraction(DebateEnvironment.Singleton);
             sim.AddInteraction(RantAboutInterest.Singleton);
             sim.AddInteraction(ConvinceToPursueInterest.Singleton);
+
+            sim.AddInteraction(ShowHobbies.Singleton);
+
             //sim.AddInteraction(SimDebugInteractions.HasBuggedInterests.Singleton);
             //sim.AddInteraction(SimDebugInteractions.ShowHobbiesUI.Singleton);
+
             sim.AddInteraction(SimDebugInteractions.GenerateInterestBook.Singleton);
+
             //sim.AddInteraction(SimDebugInteractions.ExtractSaveData.Singleton);
             //sim.AddInteraction(SimDebugInteractions.SaveTheData.Singleton);
             //sim.AddInteraction(SimDebugInteractions.CheckTheSavedDataList.Singleton);
-            sim.AddInteraction(SimDebugInteractions.ChooseAHobby.Singleton);
+
+            sim.AddInteraction(SimDebugInteractions.ChooseAHobbyDEBUG.Singleton);
 
         }
 
         public static void AddInteractionsObjects(GameObject gameObj)
         {
-            if (gameObj.GetType().IsSubclassOf(typeof(Computer)))
-            {
-                foreach (InteractionObjectPair interaction in gameObj.Interactions)
-                {
-                    if (interaction.InteractionDefinition.GetType() == ResearchInterest.Singleton.GetType() || interaction.InteractionDefinition.GetType() == SubscribeToInterestMagazine.Singleton.GetType() || interaction.InteractionDefinition.GetType() == UnSubscribeToInterestMagazine.Singleton.GetType())
-                    {
-                        return;
-                    }
-                }
-                gameObj.AddInteraction(ResearchInterest.Singleton);
-                gameObj.AddInteraction(SubscribeToInterestMagazine.Singleton);
-                gameObj.AddInteraction(UnSubscribeToInterestMagazine.Singleton);
-            }
+            
+            if (gameObj == null || gameObj.Interactions == null)
+                return;
 
-            if (gameObj.GetType() == typeof(PhoneSmart) || gameObj.GetType().IsSubclassOf(typeof(PhoneTable)))
-            {
-                foreach (InteractionObjectPair interaction in gameObj.Interactions)
-                {
-                    if (interaction.InteractionDefinition.GetType() == ResearchInterestPhone.Singleton.GetType())
-                    {
-                        return;
-                    }
-                }
-                if (gameObj.ItemComp.InteractionsInventory != null)
-                {
-                    foreach (InteractionObjectPair iop in gameObj.ItemComp.InteractionsInventory)
-                    {
-                        if (iop.InteractionDefinition.GetType() == ResearchInterestPhone.Singleton.GetType())
-                        {
-                            return;
-                        }
-                    }
-                }
-                gameObj.AddInteraction(ResearchInterestPhone.Singleton);
-                gameObj.AddInventoryInteraction(ResearchInterestPhone.Singleton);
 
-            }
             if (gameObj.GetType() == typeof(Lot))
             {
                 foreach (InteractionObjectPair interaction in gameObj.Interactions)
@@ -767,11 +784,133 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                 gameObj.AddInteraction(AssignInterestLot.Singleton);
             }
 
+            if (gameObj.GetType().IsSubclassOf(typeof(Computer)))
+            {
+                foreach (InteractionObjectPair interaction in gameObj.Interactions)
+                {
+                    if (interaction == null || interaction.InteractionDefinition == null || interaction.InteractionDefinition.GetType() == ResearchInterest.Singleton.GetType() || interaction.InteractionDefinition.GetType() == SubscribeToInterestMagazine.Singleton.GetType() || interaction.InteractionDefinition.GetType() == UnSubscribeToInterestMagazine.Singleton.GetType() || interaction.InteractionDefinition.GetType() == CheckEnergyInfoComputer.Singleton.GetType())
+                    {
+                        return;
+                    }
+                }
+                if (gameObj.ItemComp != null && gameObj.ItemComp.InteractionsInventory != null)
+                {
+                    foreach (InteractionObjectPair iop in gameObj.ItemComp.InteractionsInventory)
+                    {
+                        if (iop == null || iop.InteractionDefinition == null || iop.InteractionDefinition.GetType() == ResearchInterest.Singleton.GetType() || iop.InteractionDefinition.GetType() == SubscribeToInterestMagazine.Singleton.GetType() || iop.InteractionDefinition.GetType() == UnSubscribeToInterestMagazine.Singleton.GetType() || iop.InteractionDefinition.GetType() == CheckEnergyInfoComputer.Singleton.GetType())
+                        {
+                            return;
+                        }
+                    }
+                }
+
+                gameObj.AddInteraction(ResearchInterest.Singleton);
+                gameObj.AddInteraction(SubscribeToInterestMagazine.Singleton);
+                gameObj.AddInteraction(UnSubscribeToInterestMagazine.Singleton);
+                gameObj.AddInteraction(CheckEnergyInfoComputer.Singleton);
+
+            }
+
+            if (gameObj.GetType() == typeof(PhoneSmart) )
+            {
+                foreach (InteractionObjectPair interaction in gameObj.Interactions)
+                {
+                    if (interaction.InteractionDefinition.GetType() == ResearchInterestPhone.Singleton.GetType() || interaction.InteractionDefinition.GetType() == CheckEnergyCompany.Singleton.GetType() || interaction.InteractionDefinition.GetType() == CancelCarpoolService.Singleton.GetType() || interaction.InteractionDefinition.GetType() == CancelSchoolBusService.Singleton.GetType() || interaction.InteractionDefinition.GetType() == CheckEnergyInfo.Singleton.GetType())
+                    {
+                        return;
+                    }
+                }
+                if (gameObj.ItemComp.InteractionsInventory != null)
+                {
+                    foreach (InteractionObjectPair iop in gameObj.ItemComp.InteractionsInventory)
+                    {
+                        if (iop.InteractionDefinition.GetType() == ResearchInterestPhone.Singleton.GetType() || iop.InteractionDefinition.GetType() == CheckEnergyCompany.Singleton.GetType() || iop.InteractionDefinition.GetType() == CancelCarpoolService.Singleton.GetType() || iop.InteractionDefinition.GetType() == CancelSchoolBusService.Singleton.GetType() || iop.InteractionDefinition.GetType() == CheckEnergyInfo.Singleton.GetType())
+                        {
+                            return;
+                        }
+                    }
+                }
+                gameObj.AddInteraction(ResearchInterestPhone.Singleton);
+                gameObj.AddInventoryInteraction(ResearchInterestPhone.Singleton);
+                gameObj.AddInteraction(CheckEnergyCompany.Singleton);
+                gameObj.AddInventoryInteraction(CheckEnergyCompany.Singleton);
+
+                gameObj.AddInteraction(CheckEnergyInfo.Singleton);
+                gameObj.AddInventoryInteraction(CheckEnergyInfo.Singleton);
+
+                gameObj.AddInteraction(CancelCarpoolService.Singleton);
+                gameObj.AddInventoryInteraction(CancelCarpoolService.Singleton);
+                gameObj.AddInteraction(CancelSchoolBusService.Singleton);
+                gameObj.AddInventoryInteraction(CancelSchoolBusService.Singleton);
+            }
+
+            if (gameObj.GetType().IsSubclassOf(typeof(PhoneHome)))
+            {
+                ////print("Found type.");
+                foreach (InteractionObjectPair interaction in gameObj.Interactions)
+                {
+                    if (interaction.InteractionDefinition.GetType() == CancelCarpoolService.Singleton.GetType() || interaction.InteractionDefinition.GetType() == CancelSchoolBusService.Singleton.GetType())
+                    //if (interaction.InteractionDefinition.GetType() == CancelCarpoolService.Singleton.GetType())
+                    {
+                        return;
+                    }
+                }
+                //if (gameObj.ItemComp != null && gameObj.ItemComp.InteractionsInventory != null)
+                //{
+                //    foreach (InteractionObjectPair iop in gameObj.ItemComp.InteractionsInventory)
+                //    {
+                //        if (iop.InteractionDefinition.GetType() == CancelCarpoolService.Singleton.GetType() || iop.InteractionDefinition.GetType() == CancelSchoolBusService.Singleton.GetType())
+                //        {
+                //            return;
+                //        }
+                //    }
+                //}
+
+                gameObj.AddInteraction(CancelCarpoolService.Singleton);
+                gameObj.AddInteraction(CancelSchoolBusService.Singleton);
+
+
+                gameObj.AddInventoryInteraction(CancelCarpoolService.Singleton);
+                gameObj.AddInventoryInteraction(CancelSchoolBusService.Singleton);
+            }
+            if (gameObj.GetType() == typeof(PhoneCell) || gameObj.GetType().IsSubclassOf(typeof(PhoneCell)))
+            {
+                foreach (InteractionObjectPair interaction in gameObj.Interactions)
+                {
+                    if (interaction.InteractionDefinition.GetType() == CancelCarpoolService.Singleton.GetType() || interaction.InteractionDefinition.GetType() == CancelSchoolBusService.Singleton.GetType())
+                    {
+                            return;
+                    }
+                }
+                //if (gameObj.ItemComp != null && gameObj.ItemComp.InteractionsInventory != null)
+                //{
+                //    foreach (InteractionObjectPair iop in gameObj.ItemComp.InteractionsInventory)
+                //    {
+                //        if (iop.InteractionDefinition.GetType() == CancelCarpoolService.Singleton.GetType() || iop.InteractionDefinition.GetType() == CancelSchoolBusService.Singleton.GetType())
+                //        {
+                //            return;
+                //        }
+                //    }
+                //}
+
+                gameObj.AddInteraction(CancelCarpoolService.Singleton);
+                gameObj.AddInteraction(CancelSchoolBusService.Singleton);
+
+                gameObj.AddInventoryInteraction(CancelCarpoolService.Singleton);
+                gameObj.AddInventoryInteraction(CancelSchoolBusService.Singleton);
+
+            }
+
+
             if (gameObj.GetType() == typeof(SolarPanel))
             {
-                SolarPanel[] solar = Sim.ActiveActor.LotHome.GetObjects<SolarPanel>();
+                SolarPanel[] solar = null;
+                if (Sim.ActiveActor != null)
+                {
+                    solar = Sim.ActiveActor.LotHome.GetObjects<SolarPanel>();
+                }
 
-                if(solar.Length == 1)
+                if (solar != null && solar.Length == 1)
                 {
                     print("You've bought a solar panel! Time to choose which sim(s) should get a point into Environment");
 
@@ -805,7 +944,7 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
             {
                 if (household != null && household.SimDescription != null && household.SimDescription.CreatedSim != null)
                 {
-                    if (household.InWorld && !household.IsPet && !household.IsPerformingAService && household.Household.LotHome != null && sim.SimDescriptionId != household.SimDescription.SimDescriptionId)
+                    if (household.InWorld && !household.IsPet && !household.IsPerformingAService && household.Household.LotHome != null)
                     {
                         List<ObjectPicker.ColumnInfo> list4 = new List<ObjectPicker.ColumnInfo>();
 
@@ -839,21 +978,38 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
 
         public static void RemoveInteractionsFromObject(GameObject gameObj)
         {
+            if (gameObj == null)
+                return;
+
             if (gameObj.GetType().IsSubclassOf(typeof(Computer)))
             {
                 gameObj.RemoveInteraction(new InteractionObjectPair(ResearchInterest.Singleton, gameObj));
                 gameObj.RemoveInteraction(new InteractionObjectPair(SubscribeToInterestMagazine.Singleton, gameObj));
                 gameObj.RemoveInteraction(new InteractionObjectPair(UnSubscribeToInterestMagazine.Singleton, gameObj));
+                gameObj.RemoveInteraction(new InteractionObjectPair(CheckEnergyInfo.Singleton, gameObj));
+
             }
 
-            if (gameObj.GetType() == typeof(PhoneSmart) || gameObj.GetType().IsSubclassOf(typeof(PhoneTable)))
+            if (gameObj.GetType() == typeof(PhoneHome) || gameObj.GetType().IsSubclassOf(typeof(PhoneHome))
+                || gameObj.GetType() == typeof(PhoneCell) || gameObj.GetType().IsSubclassOf(typeof(PhoneCell)))
+            {
+                gameObj.RemoveInteraction(new InteractionObjectPair(CancelCarpoolService.Singleton, gameObj));
+                gameObj.RemoveInteraction(new InteractionObjectPair(CancelSchoolBusService.Singleton, gameObj));
+            }
+
+            if (gameObj.GetType() == typeof(PhoneSmart))
             {
                 gameObj.RemoveInteraction(new InteractionObjectPair(ResearchInterestPhone.Singleton, gameObj));
+                gameObj.RemoveInteraction(new InteractionObjectPair(CheckEnergyCompany.Singleton, gameObj));
+                gameObj.RemoveInteraction(new InteractionObjectPair(CheckEnergyInfo.Singleton, gameObj));
+
+                gameObj.RemoveInteraction(new InteractionObjectPair(CancelCarpoolService.Singleton, gameObj));
+                gameObj.RemoveInteraction(new InteractionObjectPair(CancelSchoolBusService.Singleton, gameObj));
             }
+
             if (gameObj.GetType() == typeof(Lot))
-            {
                 gameObj.RemoveInteraction(new InteractionObjectPair(AssignInterestLot.Singleton, gameObj));
-            }
+            
         }
 
         public static void print(string text)

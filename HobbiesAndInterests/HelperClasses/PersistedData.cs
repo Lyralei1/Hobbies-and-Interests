@@ -12,8 +12,10 @@ namespace Lyralei.InterestMod
     public class PersistedDataInterests
     {
 
-        [Persistable] // string = version+savename. String 2 = Binary data in string format. (See InterestSaveManager.cs)
-        public string mInterestSaveData;
+        // string = version+savename. String 2 = Binary data in string format. (See InterestSaveManager.cs)
+        //public string mInterestSaveData;
+        [Persistable]
+        public static Dictionary<string, string> mInterestSaveData = new Dictionary<string, string>(); // Key = Save/world name, Value = Data
 
         [Persistable]
         public Dictionary<string, BookMagazineInterestsData> mMagazinePolitics;
@@ -61,11 +63,6 @@ namespace Lyralei.InterestMod
 
         public PersistedDataInterests()
         {
-
-            if (mInterestSaveData == null)
-            {
-                mInterestSaveData = "";
-            }
 
             if (mMagazinePolitics == null)
             {
@@ -128,7 +125,6 @@ namespace Lyralei.InterestMod
 
         public void Cleanup()
         {
-            mInterestSaveData = "";
             mMagazinePolitics = null;
             mMagazineCrime = null;
             mMagazineFood = null;

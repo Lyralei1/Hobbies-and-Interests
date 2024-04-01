@@ -3,6 +3,7 @@ using Sims3.Gameplay.Actors;
 using Sims3.Gameplay.ActorSystems;
 using Sims3.Gameplay.Autonomy;
 using Sims3.Gameplay.CAS;
+using Sims3.Gameplay.Core;
 using Sims3.Gameplay.EventSystem;
 using Sims3.Gameplay.Interactions;
 using Sims3.Gameplay.Interfaces;
@@ -239,6 +240,8 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                 }
             }
 
+            public AlarmHandle mDoClimateChangeWorry = AlarmHandle.kInvalidHandle;
+
             public ClimateChangeHobby(bool isVegetarian, Interest interest)
             {
                 this.mName                                  = "Climate change";
@@ -272,6 +275,33 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                 this.mHobbyChallenges.Add(plantTrees);
 
                 IsVegetarian = isVegetarian;
+
+                int dayToWorry = RandomUtil.GetInt(4, 10);
+
+                mDoClimateChangeWorry = AlarmManager.Global.AddAlarmRepeating(dayToWorry, TimeUnit.Days, DoClimateChangeWorry, dayToWorry, TimeUnit.Days, "Environment_worryAbout", AlarmType.AlwaysPersisted, null);
+            }
+
+            public void DoClimateChangeWorry()
+            {
+                SimDescription owner = SimDescription.Find(mLinkedInterestInstance.InterestOwner);
+
+                if (owner == null)
+                    return;
+                if (owner.CreatedSim.BuffManager.HasElement(0xA74C038A60FBF398))
+                {
+                    return;
+                }
+
+                bool morelikely = owner.TraitManager.HasAnyElement(new TraitNames[] { TraitNames.Neurotic, TraitNames.GreenThumb, TraitNames.Unstable, TraitNames.BroodingTrait, TraitNames.Vegetarian, TraitNames.EnvironmentallyConscious, TraitNames.LovesTheOutdoors, TraitNames.OverEmotional });
+                
+                if(morelikely && RandomUtil.CoinFlip())
+                {
+                    owner.CreatedSim.BuffManager.AddElement(0xA74C038A60FBF398, Origin.FromBeingScared);
+                }
+                if(!morelikely && RandomUtil.RandomChance(45f))
+                {
+                    owner.CreatedSim.BuffManager.AddElement(0xA74C038A60FBF398, Origin.FromBeingScared);
+                }
             }
 
             public override string ToString()

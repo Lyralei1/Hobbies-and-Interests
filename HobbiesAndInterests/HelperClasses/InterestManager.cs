@@ -1,4 +1,5 @@
-﻿using Lyralei.InterestMod;
+﻿using HobbiesAndInterests.HelperClasses;
+using Lyralei.InterestMod;
 using Sims3.Gameplay.Actors;
 using Sims3.Gameplay.ActorSystems;
 using Sims3.Gameplay.CAS;
@@ -68,12 +69,14 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
         {
         }
 
-
         // Ulong == SimDescription ID
         // Interest is a collection of interests of the sim.
         public static Dictionary<ulong, List<Interest>> mSavedSimInterests = new Dictionary<ulong, List<Interest>>();
 
         private static readonly InterestManager instance = new InterestManager();
+
+        public static readonly EnergyManager mEnergyManagerInstance = new EnergyManager();
+
 
         [Tunable]
         public static int perTraitPenaltyPointLost = -3;
@@ -89,6 +92,14 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
             get
             {
                 return instance;
+            }
+        }
+
+        public static EnergyManager EnergyManagerInstance
+        {
+            get
+            {
+                return mEnergyManagerInstance;
             }
         }
 
@@ -472,7 +483,6 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
 
         public static int DoesSimHatesLovesInterest(Interest interest)
         {
-
             try
             {
                 if(interest == null) { return 3; }
@@ -677,7 +687,7 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
             }
         }
 
-        // These are full points, rather than sub-points (aka, xp)
+        // These are full points, rather than sub-points/XP
         public static void AddInterestPoints(float toAdd, SimDescription description, InterestTypes interestToAdd)
         {
             if (mSavedSimInterests.ContainsKey(description.SimDescriptionId))
@@ -687,11 +697,17 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                     if (mSavedSimInterests[description.SimDescriptionId][i].Guid == interestToAdd)
                     {
                         mSavedSimInterests[description.SimDescriptionId][i].modifyInterestLevel((int)toAdd, description.SimDescriptionId, mSavedSimInterests[description.SimDescriptionId][i].mInterestsGuid);
-                        
+
+                        if (mSavedSimInterests[description.SimDescriptionId][i].currInterestPoints == 11)
+                        {
+                            description.CreatedSim.ShowTNSIfSelectable(description.FirstName + " has started to shown some interest in " + mSavedSimInterests[description.SimDescriptionId][i].Guid.ToString() + "! This means they can pursue a hobby within their interest. See: Sim > Interests & Hobbies > " + mSavedSimInterests[description.SimDescriptionId][i].Guid.ToString() + " > Check Hobbies...", StyledNotification.NotificationStyle.kSimTalking);
+                        }
+
+
                         // Check with player if they want sim to become vegetarian 
                         if (mSavedSimInterests[description.SimDescriptionId][i].Guid == InterestTypes.Environment)
                         {
-                            if(mSavedSimInterests[description.SimDescriptionId][i].currInterestPoints == 7)
+                            if(mSavedSimInterests[description.SimDescriptionId][i].currInterestPoints == 14)
                             {
                                 if (!description.TraitManager.HasElement(TraitNames.Vegetarian))
                                 {
@@ -709,7 +725,7 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
 
 
 
-                    
+
                     }
                 }
             }
@@ -726,6 +742,33 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                         if(mSavedSimInterests[description.SimDescriptionId][i].currInterestPoints >= mSavedSimInterests[description.SimDescriptionId][i].mMaxForSocialLevel)
                         {
                             if (!mSavedSimInterests[description.SimDescriptionId][i].mHasNotifiedPlayerAboutSocialSkilling) { description.CreatedSim.ShowTNSIfSelectable("I can no longer gain influence from talking about my interest... maybe I should spend more time with my hobbies instead...", StyledNotification.NotificationStyle.kSimTalking); }
+                            mSavedSimInterests[description.SimDescriptionId][i].mHasNotifiedPlayerAboutSocialSkilling = true;
+
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Is used for using objects/interactions of which they are so tiny, the influence shouldn't be giving them interest points anymore.
+        /// </summary>
+        /// <param name="description"></param>
+        /// <param name="interestToAdd"></param>
+        /// <returns></returns>
+        public static bool CanAddSubPointsForGeneric(SimDescription description, InterestTypes interestToAdd)
+        {
+            if (mSavedSimInterests.ContainsKey(description.SimDescriptionId))
+            {
+                for (int i = 0; i < mSavedSimInterests[description.SimDescriptionId].Count; i++)
+                {
+                    if (mSavedSimInterests[description.SimDescriptionId][i].Guid == interestToAdd)
+                    {
+                        if (mSavedSimInterests[description.SimDescriptionId][i].currInterestPoints >= mSavedSimInterests[description.SimDescriptionId][i].mMaxForSocialLevel)
+                        {
+                            if (!mSavedSimInterests[description.SimDescriptionId][i].mHasNotifiedPlayerAboutSocialSkilling) { description.CreatedSim.ShowTNSIfSelectable("I can no longer gain influence from doing tiny interactions about my interest... maybe I should spend more time on bigger aspects of my hobby...", StyledNotification.NotificationStyle.kSimTalking); }
                             mSavedSimInterests[description.SimDescriptionId][i].mHasNotifiedPlayerAboutSocialSkilling = true;
 
                             return false;
