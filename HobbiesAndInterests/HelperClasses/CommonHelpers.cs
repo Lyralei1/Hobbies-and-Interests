@@ -6,6 +6,7 @@ using Sims3.Gameplay.Interfaces;
 using Sims3.Gameplay.Lyralei.InterestMod;
 using Sims3.Gameplay.Objects.Appliances;
 using Sims3.Gameplay.Objects.Electronics;
+using Sims3.Gameplay.Objects.HobbiesSkills;
 using Sims3.Gameplay.Objects.Lighting;
 using Sims3.Gameplay.Objects.PerformanceObjects;
 using Sims3.Gameplay.Objects.Register;
@@ -34,7 +35,7 @@ namespace Lyralei.InterestMod
                     "Sims3.Gameplay.Objects.Electronics",
                     "Sims3.Gameplay.Objects.Appliances",
                     "Sims3.Gameplay.Objects.Lighting",
-                    "Sims3.Gameplay.Objects.PerformanceObjects"
+                    "Sims3.Gameplay.Objects.PerformanceObjects",
             };
 
             foreach (GameObject obj in mGameObjects)
@@ -68,7 +69,8 @@ namespace Lyralei.InterestMod
                     (mNamespace == validNamespaces[3]) ||
                     (mNamespace == validNamespaces[4]) ||
                     obj.GetType() == typeof(ShoppingRegister) ||
-                    obj.GetType() == typeof(AthleticGameObject)
+                    obj.GetType() == typeof(AthleticGameObject) ||
+                    obj.GetType() == typeof(NectarMaker)
                     )
                 {
                     mElectronics.Add(obj);
@@ -99,6 +101,17 @@ namespace Lyralei.InterestMod
             //Type typeFromHandle = typeof(RandomizerFunctions);
             //return typeFromHandle.GetMethod(methodName);
         }
+
+        // Gotten from https://stackoverflow.com/questions/1028136/random-entry-from-dictionary
+        public static TValue GetRandomDictionary<TKey, TValue>(IDictionary<TKey, TValue> dict)
+        {
+            Random rand = new Random();
+            List<TKey> keyList = new List<TKey>(dict.Keys);
+
+            TKey randomKey = keyList[RandomUtil.GetInt(keyList.Count + 1)];
+            return dict[randomKey];
+        }
+
 
         public static Dictionary<Key, Value> MergeInPlace<Key, Value>(Dictionary<Key, Value> left, Dictionary<Key, Value> right)
         {

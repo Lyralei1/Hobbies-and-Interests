@@ -9,16 +9,20 @@ using Sims3.Gameplay.Interactions;
 using Sims3.Gameplay.Interfaces;
 using Sims3.Gameplay.Lyralei.InterestMod;
 using Sims3.Gameplay.Lyralei.InterestsAndHobbies;
+using Sims3.Gameplay.Objects.Alchemy;
 using Sims3.Gameplay.Objects.Appliances;
 using Sims3.Gameplay.Objects.CookingObjects;
 using Sims3.Gameplay.Objects.Counters;
+using Sims3.Gameplay.Objects.Decorations;
 using Sims3.Gameplay.Objects.Electronics;
 using Sims3.Gameplay.Objects.Fireplaces;
 using Sims3.Gameplay.Objects.Fishing;
 using Sims3.Gameplay.Objects.Gardening;
 using Sims3.Gameplay.Objects.HobbiesSkills;
+using Sims3.Gameplay.Objects.HobbiesSkills.Science;
 using Sims3.Gameplay.Objects.Miscellaneous;
 using Sims3.Gameplay.Objects.Plumbing;
+using Sims3.Gameplay.Services;
 using Sims3.Gameplay.Situations;
 using Sims3.Gameplay.Skills;
 using Sims3.Gameplay.Utilities;
@@ -30,6 +34,9 @@ using Sims3.UI.Hud;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using static Sims3.Gameplay.ActorSystems.OccultImaginaryFriend;
+using static Sims3.Gameplay.Core.Terrain;
+using static Sims3.Gameplay.Objects.HobbiesSkills.Easel;
 using static Sims3.Gameplay.StoreSystems.SetObjectHelper;
 using static Sims3.Gameplay.StoryProgression.Demographics.Demographic;
 using Camera = Sims3.Gameplay.Core.Camera;
@@ -297,12 +304,15 @@ namespace Lyralei.InterestMod
                     break;
                 case InterestTypes.Entertainment:
                     //randomStringFromList = RandomUtil.GetRandomStringFromList(InterestManager.Instance.kInterestEntertainmentBalloons);
+                    if (sim.SkillManager.HasElement(SkillNames.VideoGame) && sim.SkillManager.GetSkillLevel(SkillNames.VideoGame) > 2) simInterests.Add("VideoGaming");
+                    if (sim.SkillManager.HasElement(SkillNames.SocialNetworking) && sim.SkillManager.GetSkillLevel(SkillNames.SocialNetworking) > 2) simInterests.Add("socialnetworking");
+
                     break;
                 case InterestTypes.Environment:
 
-                    if (sim.SkillManager.HasElement(SkillNames.Gardening) && sim.SkillManager.GetSkillLevel(SkillNames.Gardening) > 1) simInterests.Add("Gardening");
-                    if (sim.SkillManager.HasElement(SkillNames.Fishing) && sim.SkillManager.GetSkillLevel(SkillNames.Fishing) > 1) simInterests.Add("Fishing");
-                    if (sim.SkillManager.HasElement(SkillNames.Handiness) && sim.SkillManager.GetSkillLevel(SkillNames.Handiness) > 3) simInterests.Add("Handiness");
+                    if (sim.SkillManager.HasElement(SkillNames.Gardening) && sim.SkillManager.GetSkillLevel(SkillNames.Gardening) > 2) simInterests.Add("Gardening");
+                    if (sim.SkillManager.HasElement(SkillNames.Fishing) && sim.SkillManager.GetSkillLevel(SkillNames.Fishing) > 2) simInterests.Add("Fishing");
+                    if (sim.SkillManager.HasElement(SkillNames.Handiness) && sim.SkillManager.GetSkillLevel(SkillNames.Handiness) > 2) simInterests.Add("Handiness");
 
                     if (simInterests.Count > 0)
                     {
@@ -339,13 +349,16 @@ namespace Lyralei.InterestMod
                                 newItems = CommonHelpers.GetAllElectronicObjectsOnLot(getHobbyLot);
                             newItems.AddRange(CommonHelpers.GetAllElectronicObjectsOnLot(sim.LotHome));
 
+                            // If we have nothing.
+                            if (newItems.Count <= 0)
+                                return;
+
                             LotItems = newItems.ToArray();
                         }
                         // fix empty list cases.
                         if (LotItems != null)
                         {
                             List<GameObject> TinkableItems = new List<GameObject>();
-                            StringBuilder stringBuilder = new StringBuilder();
 
                             foreach (GameObject obj in LotItems)
                             {
@@ -372,6 +385,8 @@ namespace Lyralei.InterestMod
                 case InterestTypes.Food:
                     if (sim.SkillManager.HasElement(SkillNames.Gardening) && sim.SkillManager.GetSkillLevel(SkillNames.Gardening) > 1) simInterests.Add("Gardening");
                     if (sim.SkillManager.HasElement(SkillNames.Fishing) && sim.SkillManager.GetSkillLevel(SkillNames.Fishing) > 1) simInterests.Add("Fishing");
+                    if (sim.SkillManager.HasElement(SkillNames.Nectar) && sim.SkillManager.GetSkillLevel(SkillNames.Nectar) > 1) simInterests.Add("Nectar");
+                    if (sim.SkillManager.HasElement(SkillNames.Bartending) && sim.SkillManager.GetSkillLevel(SkillNames.Bartending) > 1) simInterests.Add("Mixology");
                     if (sim.SkillManager.HasElement(SkillNames.Cooking) && sim.SkillManager.GetSkillLevel(SkillNames.Cooking) > 1) simInterests.Add("Cooking");
 
                     if (skillPicked == "Gardening")
@@ -382,12 +397,172 @@ namespace Lyralei.InterestMod
                     {
                         HandleLotChoosingAndInteractions(shouldUseSavedLot, isAlreadyOnHobbyLot, skillPicked, interest, FishAutonomously.Singleton, sim, typeof(FishingSpot));
                     }
+                    else if (skillPicked == "Nectar")
+                    {
+                        // Do 50/50 because we don't know if the nectar barrel has something already. And i'm clearly lazy lol.
+                        if (RandomUtil.CoinFlip())
+                        {
+                            HandleLotChoosingAndInteractions(shouldUseSavedLot, isAlreadyOnHobbyLot, skillPicked, interest, NectarMaker.AddFruit.Singleton, sim, typeof(NectarMaker));
+                        }
+                        else
+                        {
+                            HandleLotChoosingAndInteractions(shouldUseSavedLot, isAlreadyOnHobbyLot, skillPicked, interest, NectarMaker.MakeNectar.Singleton, sim, typeof(NectarMaker));
+                        }
+                    }
+                    else if (skillPicked == "Mixology")
+                    {
+                        if (RandomUtil.CoinFlip())
+                        { 
 
+                            HandleLotChoosingAndInteractions(shouldUseSavedLot, isAlreadyOnHobbyLot, skillPicked, interest, BarAdvanced.PracticeMakingNewDrinks.Singleton, sim, typeof(BarAdvanced));
+                        }
+                        else
+                        {
+                            HandleLotChoosingAndInteractions(shouldUseSavedLot, isAlreadyOnHobbyLot, skillPicked, interest, BarAdvanced.Practice.Singleton, sim, typeof(BarAdvanced));
+                        }
+                    }
+                    else if (skillPicked == "Cooking")
+                    {
+                        if (RandomUtil.CoinFlip())
+                        {
+                            Lot getHobbyLot = null;
+                            if (shouldUseSavedLot)
+                            {
+                                 getHobbyLot = GetHobbyLotAslot(interest.mInterestsGuid, skillPicked);
+                            }
+                            else if (isAlreadyOnHobbyLot)
+                            {
+                                 getHobbyLot = sim.LotCurrent;
+                            }
+
+                            Sims3.Gameplay.Objects.FoodObjects.Recipe.MealQuantity quantity = Sims3.Gameplay.Objects.FoodObjects.Recipe.MealQuantity.DoNotCheck;
+                            if(RandomUtil.CoinFlip())
+                            {
+                                quantity = Sims3.Gameplay.Objects.FoodObjects.Recipe.MealQuantity.Group;
+                            }
+                            else
+                            {
+                                quantity = Sims3.Gameplay.Objects.FoodObjects.Recipe.MealQuantity.Single;
+                            }
+
+                            // puruse hobby at home then.
+                            if (getHobbyLot == null)
+                            {
+                                Babysitter.PushPrepareFoodInteraction(sim, RandomUtil.GetRandomObjectFromList(sim.LotCurrent.GetAllActors()), null, quantity, Sims3.Gameplay.Objects.FoodObjects.Recipe.MealDestination.SurfaceOrEat);
+                            }
+                            else
+                            {
+                                GetHobbyLotAsHobbyLot(getHobbyLot.LotId).GetRandomInteractionFromWhitelist(interest.Guid, sim.SimDescription);
+                                GoToLot.Singleton.CreateInstanceWithCallbacks(getHobbyLot, sim, sim.ForcePushPriority(), true, true, null, (Sim s, float x) => { Babysitter.PushPrepareFoodInteraction(sim, RandomUtil.GetRandomObjectFromList(sim.LotCurrent.GetAllActors()), null, quantity, Sims3.Gameplay.Objects.FoodObjects.Recipe.MealDestination.SurfaceOrEat); },null);
+                            }
+                        }
+                    }
                     break;
                 case InterestTypes.Health:
-                    //randomStringFromList = RandomUtil.GetRandomStringFromList(InterestManager.Instance.kInterestHealthBalloons);
+                    if (sim.SkillManager.HasElement(SkillNames.Logic) && sim.SkillManager.GetSkillLevel(SkillNames.Logic) > 1) simInterests.Add("Logic");
+                    if (sim.SkillManager.HasElement(SkillNames.Science) && sim.SkillManager.GetSkillLevel(SkillNames.Science) > 1) simInterests.Add("Science");
+                    if (sim.SkillManager.HasElement(SkillNames.Athletic) && sim.SkillManager.GetSkillLevel(SkillNames.Science) > 1) simInterests.Add("Athletic");
+                    if (sim.SkillManager.HasElement(SkillNames.Gardening) && sim.SkillManager.GetSkillLevel(SkillNames.Gardening) > 1) simInterests.Add("Gardening");
+                    if (sim.SkillManager.HasElement(SkillNames.Cooking) && sim.SkillManager.GetSkillLevel(SkillNames.Cooking) > 1) simInterests.Add("Cooking");
+                    if (sim.SkillManager.HasElement(SkillNames.Spellcraft) && sim.SkillManager.GetSkillLevel(SkillNames.Spellcraft) > 1) simInterests.Add("Alchemy");
+
+                    if (skillPicked == "Logic")
+                    {
+                        if(RandomUtil.RandomChance(33))
+                        {
+                            HandleLotChoosingAndInteractions(shouldUseSavedLot, isAlreadyOnHobbyLot, skillPicked, interest, ChessTable.PracticeChess.Singleton, sim, typeof(ChessTable));
+                        }
+                        else if(RandomUtil.RandomChance(33))
+                        {
+                            HandleLotChoosingAndInteractions(shouldUseSavedLot, isAlreadyOnHobbyLot, skillPicked, interest, Telescope.LookThroughOrStargaze.Singleton, sim, typeof(Telescope));
+                        }
+                        else
+                        {
+                            HandleLotChoosingAndInteractions(shouldUseSavedLot, isAlreadyOnHobbyLot, skillPicked, interest, Computer.SolveHardProblems.Singleton, sim, typeof(Computer));
+                        }
+                    }
+                    else if (skillPicked == "Science")
+                    {
+                        if (RandomUtil.CoinFlip())
+                        {
+                            HandleLotChoosingAndInteractions(shouldUseSavedLot, isAlreadyOnHobbyLot, skillPicked, interest, ScienceResearchStation.ResearchScience.Singleton, sim, typeof(ScienceResearchStation));
+                        }
+                        else
+                        {
+                            HandleLotChoosingAndInteractions(shouldUseSavedLot, isAlreadyOnHobbyLot, skillPicked, interest, AnatomySkeleton.TestSkeletal.Singleton, sim, typeof(ScienceResearchStation));
+                        }
+                    }
+                    else if(skillPicked == "Athletic")
+                    {
+
+                        if (RandomUtil.RandomChance(33))
+                        {
+                            HandleLotChoosingAndInteractions(shouldUseSavedLot, isAlreadyOnHobbyLot, skillPicked, interest, Treadmill.WorkOut.Singleton, sim, typeof(Treadmill));
+                        }
+                        else if (RandomUtil.RandomChance(33))
+                        {
+                            HandleLotChoosingAndInteractions(shouldUseSavedLot, isAlreadyOnHobbyLot, skillPicked, interest, TV.WorkOut.Singleton, sim, typeof(TV));
+                        }
+                        else
+                        {
+                            Terrain.GoJogging.Singleton.CreateInstance(sim, sim, sim.ForcePushPriority(), true, true);
+                        }
+                    }
+                    if (skillPicked == "Gardening")
+                    {
+                        HandleLotChoosingAndInteractions(shouldUseSavedLot, isAlreadyOnHobbyLot, skillPicked, interest, shouldUseSavedLot ? HarvestPlant.Harvest.Singleton : Plant.TendGarden<Plant>.Singleton, sim, typeof(Plant));
+                    }
+                    else if (skillPicked == "Cooking")
+                    {
+                        if (RandomUtil.CoinFlip())
+                        {
+                            Lot getHobbyLot = null;
+                            if (shouldUseSavedLot)
+                            {
+                                getHobbyLot = GetHobbyLotAslot(interest.mInterestsGuid, skillPicked);
+                            }
+                            else if (isAlreadyOnHobbyLot)
+                            {
+                                getHobbyLot = sim.LotCurrent;
+                            }
+
+                            Sims3.Gameplay.Objects.FoodObjects.Recipe.MealQuantity quantity = Sims3.Gameplay.Objects.FoodObjects.Recipe.MealQuantity.DoNotCheck;
+                            if (RandomUtil.CoinFlip())
+                            {
+                                quantity = Sims3.Gameplay.Objects.FoodObjects.Recipe.MealQuantity.Group;
+                            }
+                            else
+                            {
+                                quantity = Sims3.Gameplay.Objects.FoodObjects.Recipe.MealQuantity.Single;
+                            }
+
+                            // puruse hobby at home then.
+                            if (getHobbyLot == null)
+                            {
+                                Babysitter.PushPrepareFoodInteraction(sim, RandomUtil.GetRandomObjectFromList(sim.LotCurrent.GetAllActors()), null, quantity, Sims3.Gameplay.Objects.FoodObjects.Recipe.MealDestination.SurfaceOrEat);
+                            }
+                            else
+                            {
+                                GetHobbyLotAsHobbyLot(getHobbyLot.LotId).GetRandomInteractionFromWhitelist(interest.Guid, sim.SimDescription);
+                                GoToLot.Singleton.CreateInstanceWithCallbacks(getHobbyLot, sim, sim.ForcePushPriority(), true, true, null, (Sim s, float x) => { Babysitter.PushPrepareFoodInteraction(sim, RandomUtil.GetRandomObjectFromList(sim.LotCurrent.GetAllActors()), null, quantity, Sims3.Gameplay.Objects.FoodObjects.Recipe.MealDestination.SurfaceOrEat); }, null);
+                            }
+                        }
+                    }
+                    else if(skillPicked == "Alchemy")
+                    {
+                        HandleLotChoosingAndInteractions(shouldUseSavedLot, isAlreadyOnHobbyLot, skillPicked, interest, AlchemyStation.ResearchAlchemy.Singleton, sim, typeof(AlchemyStation));
+                    }
                     break;
                 case InterestTypes.Money:
+                    if (sim.SkillManager.HasElement(SkillNames.Charisma) && sim.SkillManager.GetSkillLevel(SkillNames.Charisma) > 1) simInterests.Add("Charisma");
+
+                    if (skillPicked == "Charisma")
+                    {
+                        if (RandomUtil.RandomChance(33))
+                        {
+                            HandleLotChoosingAndInteractions(shouldUseSavedLot, isAlreadyOnHobbyLot, skillPicked, interest, Mirror.PracticeSpeech.Singleton, sim, typeof(Mirror));
+                        }
+                    }
                     //randomStringFromList = RandomUtil.GetRandomStringFromList(InterestManager.Instance.kInterestMoneyBalloons);
                     break;
                 case InterestTypes.Paranormal:
@@ -487,8 +662,6 @@ namespace Lyralei.InterestMod
             List<IGameObject> spotsHome = sim.LotHome.GetObjects(type, null);
             
             // Stops here and we don't have hobby lots...
-
-
             if (shouldUseSavedLot)
             {
                 Lot getHobbyLot = GetHobbyLotAslot(interest.mInterestsGuid, skillPicked);
@@ -541,7 +714,6 @@ namespace Lyralei.InterestMod
                 }
                 return;
             }
-
 
             // If the home lot AND the residency lot has plants, then choose.
             if (spotsHome.Count != 0 && spots.Length != 0)
@@ -600,6 +772,10 @@ namespace Lyralei.InterestMod
             else if(IsSameOrSubclass(typeof(Stove), obj.GetType()))
             {
                 return Stove.Tinker.Singleton;
+            }
+            else if (IsSameOrSubclass(typeof(NectarMaker), obj.GetType()))
+            {
+                return NectarMaker.Tinker.Singleton;
             }
             else if (IsSameOrSubclass(typeof(Microwave), obj.GetType()))
             {
@@ -761,10 +937,6 @@ namespace Lyralei.InterestMod
                     if (!wasInited)
                     {
                         InteractionDefinition interactionDefinition = (gameObject.LotCurrent.IsCommunityLot ? VisitCommunityLot.Singleton : GoToLot.Singleton);
-                        InterestManager.print(interactionDefinition.ToString());
-
-                        InterestManager.print(gameObject.LotCurrent.Name);
-                        InterestManager.print(sim.FullName);
 
                         GoTo = interactionDefinition.CreateInstanceWithCallbacks(gameObject.LotCurrent, sim, sim.ForcePushPriority(), true, true, null, (Sim s, float x) => { GetSimToDoHobby(sim, gameObject, interactionDef); }, null);
 

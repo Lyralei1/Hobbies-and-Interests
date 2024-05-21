@@ -16,6 +16,7 @@ using Sims3.Gameplay.Socializing;
 using Sims3.Gameplay.UI;
 using Sims3.Gameplay.Utilities;
 using Sims3.SimIFace;
+using Sims3.SimIFace.CAS;
 using Sims3.UI;
 using System;
 using System.Collections.Generic;
@@ -1206,6 +1207,57 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
         }
 
 
+        public static List<SimDescription> GetSimsWithInterestTypesFromTown(InterestTypes type)
+        {
+            List<SimDescription> sims = new List<SimDescription>();
+
+            foreach(KeyValuePair<ulong, List<Interest>> kpv in mSavedSimInterests)
+            {
+                for(int i = 0; i < kpv.Value.Count; i++)
+                {
+                    if (kpv.Value[i].Guid == type)
+                    {
+                        SimDescription sim = SimDescription.Find(kpv.Key);
+                        
+                        if(sim != null)
+                            sims.Add(sim);
+                        break;
+                    }
+                }
+            }
+
+            return sims;
+        }
+        public static List<SimDescription> GetSimsWithInterestTypesFromTown(InterestTypes type, bool YoungAdultOrAbove)
+        {
+            List<SimDescription> sims = new List<SimDescription>();
+
+            foreach (KeyValuePair<ulong, List<Interest>> kpv in mSavedSimInterests)
+            {
+                for (int i = 0; i < kpv.Value.Count; i++)
+                {
+                    if (kpv.Value[i].Guid == type)
+                    {
+                        SimDescription sim = SimDescription.Find(kpv.Key);
+
+                        if (sim == null || sim.CreatedSim == null || sim.IsNeverSelectable || !sim.CreatedSim.InWorld && sim.IsPet && sim.CreatedSim.IsPerformingAService && sim.Household.LotHome == null)
+                            break;
+
+                        // if the sim is a teen or below, and we did want to get adults only...
+                        if (YoungAdultOrAbove && !sim.YoungAdultOrAbove)
+                            break;
+                        // if we wanted to get a teen or below but the sim is an adult...
+                        if (!YoungAdultOrAbove && sim.YoungAdultOrAbove)
+                            break;
+
+                        sims.Add(sim);
+                        break;
+                    }
+                }
+            }
+
+            return sims;
+        }
 
         public static void print(string text)
         {

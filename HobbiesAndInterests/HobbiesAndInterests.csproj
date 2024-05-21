@@ -72,6 +72,7 @@
     <Compile Include="HelperClasses\CommonHelpers.cs" />
     <Compile Include="HelperClasses\CustomContentHelper.cs" />
     <Compile Include="HelperClasses\EnergyManager.cs" />
+    <Compile Include="HelperClasses\HobbyClubManager.cs" />
     <Compile Include="HelperClasses\HobbyLot.cs" />
     <Compile Include="HelperClasses\InterestHobbyObject.cs" />
     <Compile Include="HelperClasses\InterestsBuffManager.cs" />

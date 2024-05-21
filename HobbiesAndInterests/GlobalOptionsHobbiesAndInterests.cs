@@ -15,6 +15,7 @@ using Sims3.Gameplay.Objects;
 using Sims3.Gameplay.Objects.Electronics;
 using Sims3.Gameplay.Objects.Environment;
 using Sims3.Gameplay.Objects.Lyralei;
+using Sims3.Gameplay.Objects.Miscellaneous;
 using Sims3.Gameplay.Objects.RabbitHoles;
 using Sims3.Gameplay.Socializing;
 using Sims3.Gameplay.Utilities;
@@ -25,6 +26,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
 using System.Xml;
+using static Sims3.Gameplay.Lyralei.InterestMod.HobbyClubsManager;
 
 namespace Sims3.Gameplay.Lyralei.InterestMod
 {
@@ -180,7 +182,7 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                 }
 
                 EnergyManager.Startup();
-
+                HobbyClubsManager.Startup();
 
                 OneShotFunction mShowInvitationFunction = new OneShotFunction(EnergyManager.PickEnergyCompanyForFamily);
                 Simulator.AddObject(mShowInvitationFunction);
@@ -198,7 +200,6 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                     {
                         AddInteractionsObjects(solar);
                     }
-
                 }
 
 
@@ -734,7 +735,8 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                     //pair.InteractionDefinition.GetType() == SimDebugInteractions.SaveTheData.Singleton.GetType() ||
                     //pair.InteractionDefinition.GetType() == SimDebugInteractions.CheckTheSavedDataList.Singleton.GetType() ||
                     pair.InteractionDefinition.GetType() == SimDebugInteractions.ChooseAHobbyDEBUG.Singleton.GetType() ||
-                    pair.InteractionDefinition.GetType() == ShowHobbies.Singleton.GetType()
+                    pair.InteractionDefinition.GetType() == ShowHobbies.Singleton.GetType() ||
+                    pair.InteractionDefinition.GetType() == SimDebugInteractions.TrySettingUpHobbyClubsAgain.Singleton.GetType()
                     )
                 {
                     return;
@@ -762,6 +764,7 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
             //sim.AddInteraction(SimDebugInteractions.CheckTheSavedDataList.Singleton);
 
             sim.AddInteraction(SimDebugInteractions.ChooseAHobbyDEBUG.Singleton);
+            sim.AddInteraction(SimDebugInteractions.TrySettingUpHobbyClubsAgain.Singleton);
 
         }
 
@@ -899,6 +902,11 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                 gameObj.AddInventoryInteraction(CancelCarpoolService.Singleton);
                 gameObj.AddInventoryInteraction(CancelSchoolBusService.Singleton);
 
+            }
+            if(gameObj.GetType() == typeof(Newspaper))
+            {
+                gameObj.AddInteraction(FindClubNewspaper.Singleton);
+                gameObj.AddInventoryInteraction(FindClubNewspaper.Singleton);
             }
 
 

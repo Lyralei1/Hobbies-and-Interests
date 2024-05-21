@@ -27,6 +27,9 @@ namespace Sims3.Gameplay.Lyralei.InterestsAndHobbies
         [Tunable]
         public static bool kMayTowniesPerformHobbiesAutonomously = true;
 
+        [Tunable]
+        public static int mSkillpointBeforeTownieAutoPerformHobbies = 2;
+
         /* 
          * ===================================================
          * ||                                               ||
