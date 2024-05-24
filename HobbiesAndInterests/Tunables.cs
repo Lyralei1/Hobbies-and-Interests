@@ -67,8 +67,16 @@ namespace Sims3.Gameplay.Lyralei.InterestsAndHobbies
         [Tunable]
         public static float mSubPointsToAddIfEcoFriendly = 1f;
 
+        /* 
+         * ===========================================================
+         * ||                                                       ||
+         * ||            Hobby Club Manager Tunables                ||
+         * ||                                                       ||
+         * ===========================================================
+         */
 
-
+        [Tunable]
+        public static int mHowManyHobbyClubsToGrabPerDay = 3; // Just like finding a job, how many hobby clubs will show up that day to choose from.
 
     }
 }

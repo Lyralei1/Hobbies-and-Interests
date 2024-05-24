@@ -1,6 +1,9 @@
 ﻿using HobbiesAndInterests.HelperClasses;
 using Sims3.Gameplay.Actors;
+using Sims3.Gameplay.Careers;
+using Sims3.Gameplay.CAS;
 using Sims3.Gameplay.Lyralei.InterestMod;
+using Sims3.Gameplay.Utilities;
 using Sims3.SimIFace;
 using Sims3.UI;
 using Sims3.UI.CAS;
@@ -9,6 +12,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using static Sims3.Gameplay.Core.Lot;
+using static Sims3.SimIFace.PropertyStreamWriter;
 
 namespace Lyralei.UI
 {
@@ -543,5 +548,348 @@ namespace Lyralei.UI
 		}
 	}
 
+    public class HobbyClubSelectionDialog : ModalDialog
+    {
+        public enum ControlIDs : uint
+        {
+            ButtonOK = 65333248u,
+            WindowObjectImage = 107605763u,
+            WindowSimImage = 107605764u,
+            TextCareerName = 107605765u,
+            TextCareerTitle = 107605766u,
+            TextPayPerHour = 107605767u,
+            TextHours = 107605768u,
+            ScrollDescription = 107605769u,
+            ScrollWindow = 107605770u,
+            TextDaySunday = 107605792u,
+            TextDayMonday = 107605793u,
+            TextDayTuesday = 107605794u,
+            TextDayWednesday = 107605795u,
+            TextDayThursday = 107605796u,
+            TextDayFriday = 107605797u,
+            TextDaySaturday = 107605798u,
+            WindowCurrentDayArrowStart = 107605808u,
+            CareerCycleLeftButton = 114633984u,
+            CareerCycleRightButton = 114633985u,
+            JobIconWin = 114633986u,
+            SeeLocationButton = 114633987u,
+            CancelButton = 114633988u
+        }
 
+        public IHudModel mHudModel;
+
+        public HobbyClubsManager.ClubHobby mSelectedEnergyCompany;
+
+        public List<HobbyClubsManager.ClubHobby> mCareerEntries;
+
+        public bool mbResult;
+
+        public bool mIsFemale;
+
+        public Color kDayTextNotWorkingColor = new Color(2155905152u);
+
+        public Color kDayTextWorkingColor = new Color(4278198336u);
+
+        public bool mWasMapview;
+
+        public static string kLayoutName = "HobbyClubSelectorUI";
+
+        public static int kExportID = 1;
+
+        public static HobbyClubsManager.ClubHobby Show()
+        {
+            if (ScreenGrabController.InProgress)
+            {
+                return null;
+            }
+            Responder.Instance.HudModel.RestoreUIVisibility();
+            using (HobbyClubSelectionDialog careerSelectionDialog = new HobbyClubSelectionDialog())
+            {
+                careerSelectionDialog.StartModal();
+                return careerSelectionDialog.mbResult ? careerSelectionDialog.mSelectedEnergyCompany : null;
+            }
+        }
+
+        public override bool OnEnd(uint endID)
+        {
+            mbResult = endID == base.OkayID && mSelectedEnergyCompany != null;
+            Responder.Instance.OptionsModel.UIDisableSave = false;
+            int currentIndex = mCareerEntries.IndexOf(mSelectedEnergyCompany);
+            UIManager.DarkenBackground(false);
+            SetGameUIVisibility(true);
+            BorderTreatmentsController.SetButtonEnabled(true);
+            UIManager.GetSceneWindow().MapViewModeEnabled = mWasMapview;
+            WindowBase modalWindow = UIManager.GetModalWindow();
+            if (modalWindow == mModalDialogWindow)
+            {
+                UIManager.EndModal(mModalDialogWindow);
+            }
+            PieMenu.Hide();
+            UIManager.SetOverrideCursor(0u);
+            return base.OnEnd(endID);
+        }
+
+        public void SetGameUIVisibility(bool visible)
+        {
+            UIManager.GetUITopWindow().GetChildByID(57857282u, true).Visible = visible;
+            UIManager.GetUITopWindow().GetChildByID(57857283u, true).Visible = visible;
+            UIManager.GetUITopWindow().GetChildByID(57857291u, true).Visible = visible;
+            UIManager.GetUITopWindow().GetChildByID(57857293u, true).Visible = visible;
+            UIManager.GetUITopWindow().GetChildByID(57857296u, true).Visible = visible;
+            UIManager.GetUITopWindow().GetChildByID(57857295u, true).Visible = visible;
+        }
+
+        public HobbyClubSelectionDialog()
+            : base(kLayoutName, kExportID, false, PauseMode.PauseSimulator, null)
+        {
+            mEnableBackgroundDarkening = false;
+            mHudModel = HudController.Instance.Model;
+
+            if (HobbyClubsManager.ClubsInTown.Count == 0)
+                return;
+
+            mCareerEntries = HobbyClubsManager.GetListsForHobbyUI();
+            if(mCareerEntries == null) 
+                return;
+
+            Window window = mModalDialogWindow.GetChildByID(107605763u, true) as Window;
+
+            Text text = mModalDialogWindow.GetChildByID(0xF5620679, true) as Text;
+            text.Caption = "Available Hobby Clubs";
+            //ImageDrawable imageDrawable = window.Drawable as ImageDrawable;
+            //imageDrawable.Image = UIManager.GetThumbnailImage(Responder.Instance.HudModel.GetThumbnailForGameObject(mCareerSelectionModel.InteractionObjectGuid));
+            //window.Invalidate();
+
+            Button button = mModalDialogWindow.GetChildByID(65333248u, true) as Button;
+            button.Click += OnAcceptEnergyCompany;
+            button.Caption = "Accept Hobby";
+
+            button = mModalDialogWindow.GetChildByID(114633988u, true) as Button;
+            button.Click += OnCancelButtonClick;
+            button = mModalDialogWindow.GetChildByID(114633984u, true) as Button;
+
+            if (mCareerEntries.Count > 1)
+            {
+                button.Click += OnCareerSelectionChanged;
+            }
+            else
+            {
+                button.Visible = false;
+            }
+
+            button = mModalDialogWindow.GetChildByID(114633985u, true) as Button;
+            if (mCareerEntries.Count > 1)
+            {
+                button.Click += OnCareerSelectionChanged;
+            }
+            else
+            {
+                button.Visible = false;
+            }
+
+            //button = mModalDialogWindow.GetChildByID(114633987u, true) as Button;
+            //button.Click += OnSeeLocationButtonClick;
+            FillEnergyCompanyInfo(mCareerEntries[0]); // Null reference?
+                                                      //EnableDisableAcceptCareerButton(mCareerSelectionModel, mCareerEntries[0]);
+
+            uint id = (uint)(107605808 + mHudModel.CurrentDay);
+            window = mModalDialogWindow.GetChildByID(id, true) as Window;
+            window.Visible = true;
+            mSelectedEnergyCompany = mCareerEntries[0];
+
+            //mCareerSelectionModel.CareerSelected(mSelectedCareer);
+
+            base.OkayID = 65333248u;
+            base.CancelID = 114633988u;
+            mWasMapview = UIManager.GetSceneWindow().MapViewModeEnabled;
+            UIManager.DarkenBackground(true);
+            UIManager.BeginModal(mModalDialogWindow);
+            UIManager.SetOverrideCursor(95342848u);
+            Responder.Instance.OptionsModel.UIDisableSave = true;
+        }
+
+        public bool OnPreSaveGame()
+        {
+            return false;
+        }
+
+        public void OnCareerSelectionChanged(WindowBase sender, UIButtonClickEventArgs eventArgs)
+        {
+            int num = mCareerEntries.IndexOf(mSelectedEnergyCompany);
+            int count = mCareerEntries.Count;
+            num = ((sender.ID == 114633984) ? (num + 1) : (num + (count - 1))) % count;
+            mSelectedEnergyCompany = mCareerEntries[num];
+            FillEnergyCompanyInfo(mSelectedEnergyCompany);
+            //EnableDisableAcceptCareerButton(mCareerSelectionModel, mSelectedCareer);
+            if (mSelectedEnergyCompany != null)
+            {
+                //mCareerSelectionModel.CareerSelected(mSelectedCareer);
+                UIManager.GetSceneWindow().MapViewModeEnabled = false;
+            }
+            eventArgs.Handled = true;
+        }
+
+        public void OnAcceptEnergyCompany(WindowBase sender, UIButtonClickEventArgs eventArgs)
+        {
+            EndDialog(base.OkayID);
+            eventArgs.Handled = true;
+        }
+
+        public void OnCancelButtonClick(WindowBase sender, UIButtonClickEventArgs eventArgs)
+        {
+            EndDialog(base.CancelID);
+            eventArgs.Handled = true;
+        }
+
+        public void FillEnergyCompanyInfo(HobbyClubsManager.ClubHobby entry)
+        {
+
+            if (entry != null)
+            {
+                Text text = mModalDialogWindow.GetChildByID(107605765u, true) as Text;
+                text.Caption = entry.Name;
+                text = mModalDialogWindow.GetChildByID(107605766u, true) as Text;
+
+                Window window = mModalDialogWindow.GetChildByID(107605764u, true) as Window;
+
+                SimDescription owner = SimDescription.Find(entry.ClubOwner);
+
+                //ImageDrawable imageDrawable = window.Drawable as ImageDrawable;
+                //imageDrawable.Image = UIManager.GetThumbnailImage(Responder.Instance.HudModel.GetThumbnailForGameObject(owner.CreatedSim.ObjectId));
+                //window.Invalidate();
+
+                //float getPrice = 300 * entry.NewPeakTarif;
+
+                //text.Caption = "Estimated cost p/w: $" + getPrice.ToString();
+                text = mModalDialogWindow.GetChildByID(107605769u, true) as Text;
+                text.Caption = entry.Description;
+                text.AutoSize(true);
+                text.Position = new Vector2(0f, 0f);
+                ScrollWindow scrollWindow = mModalDialogWindow.GetChildByID(107605770u, true) as ScrollWindow;
+                scrollWindow.Update();
+
+                text = mModalDialogWindow.GetChildByID(107605767u, true) as Text;
+                //text.Caption = "Off peak: " + entry.NewOffPeakTarif.ToString() + " (was: " + entry.OffPeakTarif.ToString() + "), Peak: " + entry.NewPeakTarif.ToString() + " (was: " + entry.PeakTarif.ToString() + ")";
+
+                text = mModalDialogWindow.GetChildByID(107605768u, true) as Text;
+                text.Caption = Responder.Instance.LocalizationModel.LocalizeString("UI/Caption/CareerSelection:OpenHours");
+                //HideWorkDays();
+
+                //if (entry.IsActive && entry.HasOpenHours)
+                //{
+                //	HideWorkDays();
+                //}
+                //else
+                //{
+                UpdateDaysofWeek(ParserFunctions.ParseDaysFlagFieldToString(entry.DaysToWork));
+                //}
+
+                //Button button = mModalDialogWindow.GetChildByID(114633987u, true) as Button;
+                //button.Visible = true;
+
+                //if (entry.CanActivelyJoin && entry.ActiveCareerLotID == 0)
+                //{
+                //    button.Visible = false;
+                //}
+                //else
+                //{
+                //    button.Visible = true;
+                //}
+
+                text = mModalDialogWindow.GetChildByID(0xF9EA8606, true) as Text;
+                text.Caption = "Hosted by: ";
+
+                text = mModalDialogWindow.GetChildByID(0xF9EA8605, true) as Text;
+                text.Caption = owner.FullName;
+
+                window = mModalDialogWindow.GetChildByID(114633986u, true) as Window;
+                (window.Drawable as ImageDrawable).Image = UIManager.GetThumbnailImage(Responder.Instance.HudModel.GetThumbnailForGameObject(owner.CreatedSim.ObjectId));
+                window.Invalidate();
+                //(window.Drawable as ImageDrawable).Image = UIManager.LoadUIImage(ResourceKey.CreatePNGKey(entry.CareerIconColored, 0u));
+                //window.Invalidate();
+            }
+        }
+
+        //public void EnableDisableAcceptCareerButton(ICareerSelectionModel model, IOccupationEntry entry)
+        //{
+        //	if (entry == null)
+        //	{
+        //		return;
+        //	}
+        //	GreyedOutTooltipCallback greyedOutTooltipCallback = null;
+        //	Button button = mModalDialogWindow.GetChildByID(65333248u, true) as Button;
+        //	if (entry.CanAcceptCareer(model.SimGuid, ref greyedOutTooltipCallback))
+        //	{
+        //		button.Enabled = true;
+        //		button.TooltipText = string.Empty;
+        //		return;
+        //	}
+        //	button.Enabled = false;
+        //	if (greyedOutTooltipCallback != null)
+        //	{
+        //		button.TooltipText = greyedOutTooltipCallback();
+        //	}
+        //	else
+        //	{
+        //		button.TooltipText = string.Empty;
+        //	}
+        //}
+
+        public void UpdateDaysofWeek(string workDays)
+        {
+            for (uint num = 107605792u; num <= 107605798; num++)
+            {
+                Text text = mModalDialogWindow.GetChildByID(num, true) as Text;
+                text.Visible = true;
+                text.TextColor = kDayTextNotWorkingColor;
+                text.AutoSize(false);
+            }
+            char[] array = workDays.ToCharArray();
+            foreach (char c in array)
+            {
+                uint num2 = 0u;
+                switch (c)
+                {
+                    case 'U':
+                        num2 = 107605792u;
+                        break;
+                    case 'M':
+                        num2 = 107605793u;
+                        break;
+                    case 'T':
+                        num2 = 107605794u;
+                        break;
+                    case 'W':
+                        num2 = 107605795u;
+                        break;
+                    case 'R':
+                        num2 = 107605796u;
+                        break;
+                    case 'F':
+                        num2 = 107605797u;
+                        break;
+                    case 'S':
+                        num2 = 107605798u;
+                        break;
+                }
+                if (num2 != 0)
+                {
+                    Text text2 = mModalDialogWindow.GetChildByID(num2, true) as Text;
+                    if (text2 != null)
+                    {
+                        text2.TextColor = kDayTextWorkingColor;
+                    }
+                }
+            }
+        }
+
+        public void HideWorkDays()
+        {
+            for (uint num = 107605792u; num <= 107605798; num++)
+            {
+                Text text = mModalDialogWindow.GetChildByID(num, true) as Text;
+                text.Visible = false;
+            }
+        }
+    }
 }

@@ -567,58 +567,58 @@ namespace Lyralei
             }
         }
 
-        public class TrySettingUpHobbyClubsAgain : ImmediateInteraction<Sim, Sim>
-        {
-            public static readonly InteractionDefinition Singleton = new Definition();
+        //public class TrySettingUpHobbyClubsAgain : ImmediateInteraction<Sim, Sim>
+        //{
+        //    public static readonly InteractionDefinition Singleton = new Definition();
 
-            public override bool Run()
-            {
-                if (HobbyClubsManager.ClubsInTown == null)
-                    HobbyClubsManager.ClubsInTown = new List<HobbyClubsManager.ClubHobby>();
-                else
-                    HobbyClubsManager.ClubsInTown.Clear();
-                HobbyClubsManager.Startup();
+        //    public override bool Run()
+        //    {
+        //        if (HobbyClubsManager.ClubsInTown == null)
+        //            HobbyClubsManager.ClubsInTown = new Dictionary<string, HobbyClubsManager.ClubHobby>();
+        //        else
+        //            HobbyClubsManager.ClubsInTown.Clear();
+        //        HobbyClubsManager.Startup();
 
-                HobbyClubsManager.LoadClubXML();
+        //        HobbyClubsManager.LoadClubXML();
 
-                StringBuilder sb = new StringBuilder();
-                foreach (HobbyClubsManager.ClubHobby club in HobbyClubsManager.ClubsInTown)
-                {
-                    string line = "";
-                    if (club.HobbyLot != null)
-                    {
-                        line += " At: " + club.HobbyLot.Address;
-                    }
-                    if (club.ClubOwner != 0)
-                    {
-                        SimDescription owner = SimDescription.Find(club.ClubOwner);
+        //        StringBuilder sb = new StringBuilder();
+        //        foreach (HobbyClubsManager.ClubHobby club in HobbyClubsManager.ClubsInTown)
+        //        {
+        //            string line = "";
+        //            if (club.HobbyLot != null)
+        //            {
+        //                line += " At: " + club.HobbyLot.Address;
+        //            }
+        //            if (club.ClubOwner != 0)
+        //            {
+        //                SimDescription owner = SimDescription.Find(club.ClubOwner);
 
-                        if (owner != null)
-                        {
-                            line += " owner: " + owner.FullName;
-                        }
-                    }
-                    sb.AppendLine(club.Name + line);
-                }
+        //                if (owner != null)
+        //                {
+        //                    line += " owner: " + owner.FullName;
+        //                }
+        //            }
+        //            sb.AppendLine(club.Name + line);
+        //        }
 
-                InterestManager.print(sb.ToString());
-                return true;
-            }
+        //        InterestManager.print(sb.ToString());
+        //        return true;
+        //    }
 
-            [DoesntRequireTuning]
-            public sealed class Definition : ImmediateInteractionDefinition<Sim, Sim, TrySettingUpHobbyClubsAgain>
-            {
-                public override string GetInteractionName(Sim a, Sim target, InteractionObjectPair interaction)
-                {
-                    return "DEBUG Redo Hobby Lot loading.";
-                }
-                public override bool Test(Sim a, Sim target, bool isAutonomous, ref GreyedOutTooltipCallback greyedOutTooltipCallback)
-                {
+        //    [DoesntRequireTuning]
+        //    public sealed class Definition : ImmediateInteractionDefinition<Sim, Sim, TrySettingUpHobbyClubsAgain>
+        //    {
+        //        public override string GetInteractionName(Sim a, Sim target, InteractionObjectPair interaction)
+        //        {
+        //            return "DEBUG Redo Hobby Lot loading.";
+        //        }
+        //        public override bool Test(Sim a, Sim target, bool isAutonomous, ref GreyedOutTooltipCallback greyedOutTooltipCallback)
+        //        {
 
-                    return true;
-                }
-            }
-        }
+        //            return true;
+        //        }
+        //    }
+        //}
 
 
     }

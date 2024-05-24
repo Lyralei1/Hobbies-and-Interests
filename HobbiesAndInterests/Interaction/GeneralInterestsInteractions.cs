@@ -103,8 +103,6 @@ namespace Lyralei.InterestMod
 
             if (!base.Target.StartComputing(this, Sims3.SimIFace.Enums.SurfaceHeight.Table, true))
             {
-                GlobalOptionsHobbiesAndInterests.print("False");
-
                 base.StandardExit();
                 return false;
             }

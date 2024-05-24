@@ -735,8 +735,8 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                     //pair.InteractionDefinition.GetType() == SimDebugInteractions.SaveTheData.Singleton.GetType() ||
                     //pair.InteractionDefinition.GetType() == SimDebugInteractions.CheckTheSavedDataList.Singleton.GetType() ||
                     pair.InteractionDefinition.GetType() == SimDebugInteractions.ChooseAHobbyDEBUG.Singleton.GetType() ||
-                    pair.InteractionDefinition.GetType() == ShowHobbies.Singleton.GetType() ||
-                    pair.InteractionDefinition.GetType() == SimDebugInteractions.TrySettingUpHobbyClubsAgain.Singleton.GetType()
+                    pair.InteractionDefinition.GetType() == ShowHobbies.Singleton.GetType()
+                    //pair.InteractionDefinition.GetType() == SimDebugInteractions.TrySettingUpHobbyClubsAgain.Singleton.GetType()
                     )
                 {
                     return;
@@ -764,7 +764,7 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
             //sim.AddInteraction(SimDebugInteractions.CheckTheSavedDataList.Singleton);
 
             sim.AddInteraction(SimDebugInteractions.ChooseAHobbyDEBUG.Singleton);
-            sim.AddInteraction(SimDebugInteractions.TrySettingUpHobbyClubsAgain.Singleton);
+            // sim.AddInteraction(SimDebugInteractions.TrySettingUpHobbyClubsAgain.Singleton);
 
         }
 
@@ -791,7 +791,7 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
             {
                 foreach (InteractionObjectPair interaction in gameObj.Interactions)
                 {
-                    if (interaction == null || interaction.InteractionDefinition == null || interaction.InteractionDefinition.GetType() == ResearchInterest.Singleton.GetType() || interaction.InteractionDefinition.GetType() == SubscribeToInterestMagazine.Singleton.GetType() || interaction.InteractionDefinition.GetType() == UnSubscribeToInterestMagazine.Singleton.GetType() || interaction.InteractionDefinition.GetType() == CheckEnergyInfoComputer.Singleton.GetType())
+                    if (interaction == null || interaction.InteractionDefinition == null || interaction.InteractionDefinition.GetType() == ResearchInterest.Singleton.GetType() || interaction.InteractionDefinition.GetType() == SubscribeToInterestMagazine.Singleton.GetType() || interaction.InteractionDefinition.GetType() == UnSubscribeToInterestMagazine.Singleton.GetType() || interaction.InteractionDefinition.GetType() == CheckEnergyInfoComputer.Singleton.GetType() || interaction.InteractionDefinition.GetType() == FindHobbyClub.Singleton.GetType())
                     {
                         return;
                     }
@@ -800,7 +800,7 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                 {
                     foreach (InteractionObjectPair iop in gameObj.ItemComp.InteractionsInventory)
                     {
-                        if (iop == null || iop.InteractionDefinition == null || iop.InteractionDefinition.GetType() == ResearchInterest.Singleton.GetType() || iop.InteractionDefinition.GetType() == SubscribeToInterestMagazine.Singleton.GetType() || iop.InteractionDefinition.GetType() == UnSubscribeToInterestMagazine.Singleton.GetType() || iop.InteractionDefinition.GetType() == CheckEnergyInfoComputer.Singleton.GetType())
+                        if (iop == null || iop.InteractionDefinition == null || iop.InteractionDefinition.GetType() == ResearchInterest.Singleton.GetType() || iop.InteractionDefinition.GetType() == SubscribeToInterestMagazine.Singleton.GetType() || iop.InteractionDefinition.GetType() == UnSubscribeToInterestMagazine.Singleton.GetType() || iop.InteractionDefinition.GetType() == CheckEnergyInfoComputer.Singleton.GetType() || iop.InteractionDefinition.GetType() == FindHobbyClub.Singleton.GetType())
                         {
                             return;
                         }
@@ -811,6 +811,7 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                 gameObj.AddInteraction(SubscribeToInterestMagazine.Singleton);
                 gameObj.AddInteraction(UnSubscribeToInterestMagazine.Singleton);
                 gameObj.AddInteraction(CheckEnergyInfoComputer.Singleton);
+                gameObj.AddInteraction(FindHobbyClub.Singleton);
 
             }
 
@@ -903,11 +904,7 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                 gameObj.AddInventoryInteraction(CancelSchoolBusService.Singleton);
 
             }
-            if(gameObj.GetType() == typeof(Newspaper))
-            {
-                gameObj.AddInteraction(FindClubNewspaper.Singleton);
-                gameObj.AddInventoryInteraction(FindClubNewspaper.Singleton);
-            }
+
 
 
             if (gameObj.GetType() == typeof(SolarPanel))

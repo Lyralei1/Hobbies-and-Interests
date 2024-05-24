@@ -1,4 +1,6 @@
-﻿using Lyralei.InterestMod;
+﻿using HobbiesAndInterests.HelperClasses;
+using Lyralei.InterestMod;
+using Lyralei.UI;
 using Sims3.Gameplay.Actors;
 using Sims3.Gameplay.ActorSystems;
 using Sims3.Gameplay.Autonomy;
@@ -6,17 +8,21 @@ using Sims3.Gameplay.Careers;
 using Sims3.Gameplay.CAS;
 using Sims3.Gameplay.Core;
 using Sims3.Gameplay.Interactions;
+using Sims3.Gameplay.Lyralei.InterestsAndHobbies;
 using Sims3.Gameplay.Objects.Electronics;
 using Sims3.Gameplay.Objects.Miscellaneous;
 using Sims3.Gameplay.Utilities;
 using Sims3.Gameplay.Visa;
 using Sims3.SimIFace;
+using Sims3.SimIFace.Enums;
+using Sims3.UI;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using static HobbiesAndInterests.HelperClasses.EnergyManager;
+using static Sims3.Gameplay.Objects.Entertainment.DunkTank;
 
 namespace Sims3.Gameplay.Lyralei.InterestMod
 {
@@ -29,10 +35,7 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
         // - Do activities with Club at hobby lot.
 
         [Persistable]
-        public static string mSavedEnergyCompanyData;
-
-        [Tunable]
-        public static int mHowManyHobbyClubsToGrabPerDay = 3; // Just like finding a job, how many hobby clubs will show up that day to choose from.
+        public static string mSavedSimsClubHobbiesData;
 
         private static AlarmHandle sAlarmNewHobbyList = AlarmHandle.kInvalidHandle;
 
@@ -41,12 +44,10 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
         {
             HobbyClubsManager singleton = Instance;
         }
+        //public static Dictionary<ulong, List<ClubHobby>> mSimsInClubHobbies;
 
-        public static Dictionary<ulong, ClubHobby> mSimsInClubHobbies;
-
-
-        private static List<ClubHobby> mClubsInTown;
-        public static List<ClubHobby> ClubsInTown
+        private static Dictionary<string, ClubHobby> mClubsInTown;
+        public static Dictionary<string, ClubHobby> ClubsInTown
         {
             get => mClubsInTown;
             set => mClubsInTown = value;
@@ -59,15 +60,14 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                 if (Instance == null)
                 {
                     Instance = new HobbyClubsManager();
-                    mSimsInClubHobbies = new Dictionary<ulong, ClubHobby>(); // Remove this after saving code stuff.
+                    //mSimsInClubHobbies = new Dictionary<ulong, List<ClubHobby>>(); // Remove this after saving code stuff.
                 }
 
                 if (ClubsInTown == null || ClubsInTown.Count <= 0)
                 {
-                    ClubsInTown = new List<ClubHobby>();
+                    ClubsInTown = new Dictionary<string, ClubHobby>();
                     LoadClubXML();
                 }
-
             }
             catch (Exception ex)
             {
@@ -75,32 +75,94 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
             }
         }
 
-        private static void FindRandomClubForInteraction()
+
+        //private static void SaveSimsHobbyClubData()
+        //{
+        //    try
+        //    {
+        //        MemoryStream memorystream = new MemoryStream();
+        //        BinaryWriter bw = new BinaryWriter(memorystream);
+
+        //        int allEntries = mSimsInClubHobbies.Count;
+
+        //        bw.Write(allEntries);
+
+        //        foreach (KeyValuePair <ulong, List<ClubHobby>> kpv in mSimsInClubHobbies)
+        //        {
+        //            // Get sim ID first...
+        //            bw.Write((ulong)kpv.Key);
+
+        //            // Then get the list count...
+        //            bw.Write(kpv.Value.Count);
+
+        //            foreach(ClubHobby clubHobby in kpv.Value)
+        //            {
+        //                bw.Write(clubHobby.Name);
+        //                bw.Write(clubHobby.Description);
+        //                bw.Write(clubHobby.InterestType.ToString());
+        //                bw.Write(clubHobby.StartTime);
+        //                bw.Write(clubHobby.Duration);
+        //                bw.Write(clubHobby.CanActivelyJoin);
+        //                bw.Write(clubHobby.ClubOwner);
+        //                bw.Write(ParserFunctions.ParseDaysFlagFieldToString(clubHobby.DaysToWork));
+        //                bw.Write(clubHobby.HobbyLot.lotID); // here we store the LotId, since the rest we can repopulate...
+        //                bw.Write(clubHobby.)
+        //            }
+        //        }
+
+        //    }
+        //    catch
+        //    {
+
+        //    }
+        //}
+
+
+
+
+        public static List<ClubHobby> GetListsForHobbyUI()
         {
-            if(ClubsInTown != null && ClubsInTown.Count > 0)
+            try
             {
-                ClubsInTown.ForEach(index => {
-                    index.CanActivelyJoin = false;
-                });
-
-                Random r = new Random((int)SimClock.ElapsedTime(TimeUnit.Days) + Computer.RandomComputerSeed);
-
-                int num = 0;
-                StringBuilder stringBuilder = new StringBuilder();
-
-                while (num < mHowManyHobbyClubsToGrabPerDay)
+                if (ClubsInTown != null && ClubsInTown.Count > 0)
                 {
-                    HobbyClubsManager.ClubHobby randomObjectFromList = RandomUtil.GetRandomObjectFromList(ClubsInTown, r);
-                    if (randomObjectFromList == null)
-                    {
-                        break;
-                    }
-                    randomObjectFromList.CanActivelyJoin = true;
-                    stringBuilder.AppendLine(randomObjectFromList.Name.ToString());
-                    num++;
-                }
+                    List<ClubHobby> clubs = new List<ClubHobby>();
+                    List<ClubHobby> ClubsForSeed = new List<ClubHobby>();
 
-                InterestManager.print(stringBuilder.ToString());
+                    foreach (KeyValuePair<string, ClubHobby> kvp in ClubsInTown) { 
+                        kvp.Value.CanActivelyJoin = false;
+                        ClubsForSeed.Add(kvp.Value);
+                    }
+
+                    Random r = new Random((int)SimClock.ElapsedTime(TimeUnit.Days) + Computer.RandomComputerSeed);
+
+                    int num = 0;
+
+                    while (num < Tunables.mHowManyHobbyClubsToGrabPerDay)
+                    {
+                        HobbyClubsManager.ClubHobby randomObjectFromList = RandomUtil.GetRandomObjectFromList(ClubsForSeed, r);
+                        if (randomObjectFromList == null)
+                        {
+                            break;
+                        }
+
+                        if (randomObjectFromList.ClubOwner == 0)
+                        {
+                            break;
+                        }
+                        randomObjectFromList.CanActivelyJoin = true;
+                        clubs.Add(randomObjectFromList);
+                        num++;
+                    }
+                    return clubs;
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                InterestManager.print(ex.ToString());
+                return null;
+
             }
         }
 
@@ -110,12 +172,11 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
             {
                 XmlDbData xmlSupportedMods = XmlDbData.ReadData(new ResourceKey(0x292970446D743AB9, 0x0333406C, 0x00000000), false);
 
-                if(ClubsInTown == null || ClubsInTown.Count <0 )
-                    ClubsInTown= new List<ClubHobby>();
+                if(ClubsInTown == null || ClubsInTown.Count <0)
+                    ClubsInTown= new Dictionary<string, ClubHobby>();
 
                 if (xmlSupportedMods != null)
                 {
-                    InterestManager.print("Loading Clubs...");
                     if (!ReadClubDetails(xmlSupportedMods))
                     {
                         InterestManager.print("An error occured while loading Club Hobbies XML file. Error file has been made in Documents/The Sims 3. Make sure to give this to Lyralei. Interest & Hobbies mod will work fine, but Hobby Clubs will not!");
@@ -143,6 +204,9 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
                         club.Name = row.GetString("Name");
                         club.Description = row.GetString("Description");
                         club.InterestType = row.GetEnum("InterestType", InterestTypes.None);
+                        club.DaysToWork = ParserFunctions.ParseDayListToEnum(row.GetString("DaysToWork"));
+                        club.StartTime = row.GetTime("StartTime");
+                        club.Duration = row.GetFloat("Duration");
 
                         if (club.InterestType == InterestTypes.None) { 
                             club = null;
@@ -169,15 +233,25 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
 
                             if(sims != null || sims.Count > 0)
                             {
-                                SimDescription sim = TryToGetRandomOwner(sims);
+                                SimDescription sim = TryToGetRandomOwner(sims, club.Name);
                                 if (sim != null)
                                 {
-                                    club.ClubOwner = RandomUtil.GetRandomObjectFromList<SimDescription>(sims).SimDescriptionId;
-                                    mSimsInClubHobbies.Add(club.ClubOwner, club); // Add sim to me in hobby.
+
+                                    club.ClubOwner = sim.SimDescriptionId;
+                                    AddSimToClubsList(club.ClubOwner, club);
+                                    
+
                                 }
                             }
                         }
-                        ClubsInTown.Add(club);
+                        if(!ClubsInTown.ContainsKey(club.Name))
+                        {
+                            ClubsInTown.Add(club.Name, club);
+                        }
+                        else
+                        {
+                            club = null;
+                        }
                     }
                 }
                 return true;
@@ -189,20 +263,58 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
             }
         }
 
+        //private static ulong GetRandomClubOwner(List<SimDescription> sims, int tries)
+        //{
+        //    for (int i = 0; i < tries; i++)
+        //    {
+        //        ulong simId = RandomUtil.GetRandomObjectFromList<SimDescription>(sims).SimDescriptionId;
+        //        if (!ClubsInTown.ContainsKey(simId))
+        //        {
+        //            return simId;
+        //        }
+        //    }
+        //    return 0;
+        //}
 
-        private static SimDescription TryToGetRandomOwner(List<SimDescription> sims)
+        private static SimDescription TryToGetRandomOwner(List<SimDescription> sims, string clubName)
         {
             int triesLeft = 10;
 
             for(int i = 0; i < triesLeft; i++)
             {
                 SimDescription sim = RandomUtil.GetRandomObjectFromList<SimDescription>(sims);
-                if (sim.AdultOrAbove)
+                if (sim.AdultOrAbove && !IsSimAlreadyInClub(sim.SimDescriptionId, clubName));
                 {
                     return sim;
                 }
             }
             return null;
+        }
+
+        public static void AddSimToClubsList(ulong simdesc, ClubHobby club)
+        {
+            if(ClubsInTown != null)
+            {
+                foreach(KeyValuePair<string, ClubHobby> kpv in ClubsInTown)
+                {
+                    if(kpv.Value.Name == club.Name && !IsSimAlreadyInClub(simdesc, kpv.Value.Name))
+                    {
+                        kpv.Value.mMembers.Add(simdesc);
+                    }
+                }
+            }
+        }
+
+        public static bool IsSimAlreadyInClub(ulong simdesc, string nameClub)
+        {
+            if(ClubsInTown != null)
+            {
+                if (ClubsInTown.ContainsKey(nameClub))
+                {
+                    return ClubsInTown[nameClub].mMembers.Contains(simdesc);
+                }
+            }
+            return false;
         }
 
         public class ClubHobby
@@ -217,7 +329,13 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
 
             private bool mCanActivelyJoin = false;
 
-            private ulong mClubOwner;
+            private ulong mClubOwner = 0;
+
+            public DaysOfTheWeek DaysToWork;
+
+            public float StartTime;
+
+            public float Duration;
 
             public string Name
             {
@@ -278,60 +396,69 @@ namespace Sims3.Gameplay.Lyralei.InterestMod
             }
         }
 
-        public class FindClubNewspaper : HeldNewspaperInteraction
+        public class FindHobbyClub : Computer.ComputerInteraction
         {
-            public class Definition : InteractionDefinition<Sim, Newspaper, FindClubNewspaper>
+            public class Definition : InteractionDefinition<Sim, Computer, FindHobbyClub>
             {
-
-                public override string GetInteractionName(Sim a, Newspaper target, InteractionObjectPair interaction)
+                public override string[] GetPath(bool isFemale)
                 {
-                    return "Show Hobby Clubs";
+                    return new string[2]
+                    {
+                        "Interests & Hobbies...",
+                        "Hobbies..."
+                    };
                 }
 
-                public override bool Test(Sim a, Newspaper target, bool isAutonomous, ref GreyedOutTooltipCallback greyedOutTooltipCallback)
+
+                public override string GetInteractionName(Sim actor, Computer target, InteractionObjectPair iop)
                 {
-                    if (target.IsReadable && a.SimDescription.TeenOrAbove)
-                    {
-                        return true;
-                    }
-                    return false;
+                    return "Find Hobby Club";
+                }
+
+                public override bool Test(Sim a, Computer target, bool isAutonomous, ref GreyedOutTooltipCallback greyedOutTooltipCallback)
+                {
+                    if (target.InUse || target.IsActorUsingMe(a))
+                        return false;
+
+                    return true;
                 }
             }
 
-            public static InteractionDefinition Singleton = new Definition();
+            public static readonly InteractionDefinition Singleton = new Definition();
 
             public override bool Run()
             {
-                return DoFindClub(false);
-            }
-
-            public override bool RunFromInventory()
-            {
-                return DoFindClub(true);
-            }
-
-            public bool DoFindClub(bool bFromInventory)
-            {
-                StateMachineClient stateMachineClient = StateMachineClient.Acquire(Actor.Proxy.ObjectId, "ReadNewspaper");
-                if (!Target.StartUsingNewspaper(bFromInventory, false, Actor, stateMachineClient))
+                try
                 {
-                    CarrySystem.PutDownOnFloor(Actor);
-                    return false;
-                }
-                stateMachineClient.SetActor("newspaper", Target);
-                stateMachineClient.SetActor("x", Actor);
-                stateMachineClient.RequestState("x", "ReadNewspaper");
-                FindRandomClubForInteraction();
-                return Target.StopUsingNewspaper(Actor, stateMachineClient, bFromInventory);
-            }
+                    base.StandardEntry(true);
 
-            public override void PostureTransitionFailed(bool transitionExitReason)
-            {
-                Target.PutNewspaperAway(Actor, true);
+                    if (!base.Target.StartComputing(this, SurfaceHeight.Table, true))
+                    {
+                        base.StandardExit();
+                        return false;
+                    }
+                    base.Target.StartVideo(Computer.VideoType.Browse);
+                    base.BeginCommodityUpdates();
+                    base.AnimateSim("WorkTyping");
+
+                    ClubHobby club = HobbyClubSelectionDialog.Show();
+
+                    if (club != null)
+                    {
+                        AddSimToClubsList(base.Actor.SimDescription.SimDescriptionId, club);
+                    }
+
+                    base.Target.StopComputing(this, Computer.StopComputingAction.TurnOff, false);
+                    base.EndCommodityUpdates(true);
+                    base.StandardExit();
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    InterestManager.print(ex.ToString());
+                }
+                return false;
             }
         }
-
-
-
     }
 }
